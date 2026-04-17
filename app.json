@@ -1,0 +1,46 @@
+{
+  "id": "6ee91b98-9fde-425f-a527-881da831af86",
+  "name": "RECLAMATION",
+  "publisher": "Default Publisher",
+  "version": "1.0.0.0",
+  "brief": "",
+  "description": "",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [
+
+    {
+      "id": "6c53635c-da7a-4f40-9e39-835a48789f98",
+      "name": "elva dms bc24",
+      "version": "1.0.0.0",
+      "publisher": "elva"
+    }, 
+    {
+      "id": "0bfb933e-6382-4eca-9db5-bdda953de82b",
+      "name": "elva std bc24",
+      "version": "1.0.0.0",
+      "publisher": "Deltasoft International"
+    }
+  ],
+  "screenshots": [],
+  "platform": "1.0.0.0",
+  "application": "24.0.0.0",
+  "idRanges": [
+    {
+      "from": 50100,
+      "to": 70149
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  },
+  "runtime": "13.0",
+  "features": [
+    "NoImplicitWith"
+  ]
+}
