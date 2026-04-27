@@ -54,21 +54,47 @@ table 65000 "Reclamation"
         {
             Caption = 'Code Catégorie';
             DataClassification = CustomerContent;
+            TableRelation = "Rec Categorie".Code;
+
+            trigger OnValidate()
+            var
+                RecCat: Record "Rec Categorie";
+            begin
+                if RecCat.Get("Code Categorie") then
+                    "Description Categorie" := RecCat.Description
+                else
+                    "Description Categorie" := '';
+                "Code Sous Categorie" := '';
+                "Description Sous Categorie" := '';
+            end;
         }
         field(9; "Description Categorie"; Text[100])
         {
             Caption = 'Description Catégorie';
             DataClassification = CustomerContent;
+            Editable = false;
         }
         field(10; "Code Sous Categorie"; Code[20])
         {
             Caption = 'Code Sous-Catégorie';
             DataClassification = CustomerContent;
+            TableRelation = "Rec Sous Categorie".Code where("Code Categorie" = field("Code Categorie"));
+
+            trigger OnValidate()
+            var
+                RecSousCat: Record "Rec Sous Categorie";
+            begin
+                if RecSousCat.Get("Code Categorie", "Code Sous Categorie") then
+                    "Description Sous Categorie" := RecSousCat.Description
+                else
+                    "Description Sous Categorie" := '';
+            end;
         }
         field(11; "Description Sous Categorie"; Text[100])
         {
             Caption = 'Description Sous-Catégorie';
             DataClassification = CustomerContent;
+            Editable = false;
         }
         field(12; "Groupe Utilisateur"; Code[20])
         {

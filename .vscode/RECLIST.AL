@@ -1,11 +1,11 @@
-page 65001 "Reclamation List"
+page 65001 "Reclamation List PFE"
 {
     Caption = 'Liste Réclamations Client Auto';
     PageType = List;
     SourceTable = Reclamation;
     UsageCategory = Lists;
     ApplicationArea = All;
-    CardPageId = "Reclamation Card";
+    CardPageId = "Reclamation Card PFE";
 
     layout
     {
@@ -17,25 +17,26 @@ page 65001 "Reclamation List"
                 {
                     ApplicationArea = All;
                     Caption = 'N° Réclamation';
-
                 }
                 field(Description; Rec.Description)
                 {
                     ApplicationArea = All;
                     Caption = 'Description';
                 }
+                field("No. Serie Vehicule"; Rec."No. Serie Vehicule")
+                {
+                    ApplicationArea = All;
+                    Caption = 'N° Série Véhicule';
+                }
                 field("No. Telephone"; Rec."No. Telephone")
                 {
                     ApplicationArea = All;
                     Caption = 'N° Téléphone';
-
                 }
-
                 field("Code Categorie"; Rec."Code Categorie")
                 {
                     ApplicationArea = All;
                     Caption = 'Code Catégorie';
-
                 }
                 field("Groupe Utilisateur"; Rec."Groupe Utilisateur")
                 {
@@ -61,11 +62,13 @@ page 65001 "Reclamation List"
                 {
                     ApplicationArea = All;
                     Caption = 'Priorité';
+                    StyleExpr = PrioriteStyle;
                 }
                 field(Statut; Rec.Statut)
                 {
                     ApplicationArea = All;
                     Caption = 'Statut';
+                    StyleExpr = StatutStyle;
                 }
                 field("Date Cloture"; Rec."Date Cloture")
                 {
@@ -82,11 +85,10 @@ page 65001 "Reclamation List"
                     ApplicationArea = All;
                     Caption = 'Retour Client';
                 }
-
-
             }
         }
     }
+
     actions
     {
         area(Processing)
@@ -101,10 +103,42 @@ page 65001 "Reclamation List"
 
                 trigger OnAction()
                 begin
-                    PAGE.Run(PAGE::"Reclamation Card");
+                    PAGE.Run(PAGE::"Reclamation Card PFE");
                 end;
             }
         }
     }
 
+    trigger OnAfterGetRecord()
+    begin
+        // Couleurs Statut
+        case Rec.Statut of
+            Rec.Statut::" ":
+                StatutStyle := 'Standard';
+            Rec.Statut::Ouverte:
+                StatutStyle := 'Unfavorable';
+            Rec.Statut::"Prise en charge":
+                StatutStyle := 'Ambiguous';
+            Rec.Statut::"En cours":
+                StatutStyle := 'Ambiguous';
+            Rec.Statut::Cloturee:
+                StatutStyle := 'Favorable';
+        end;
+
+        // Couleurs Priorité
+        case Rec.Priorite of
+            Rec.Priorite::" ":
+                PrioriteStyle := 'Standard';
+            Rec.Priorite::Faible:
+                PrioriteStyle := 'Favorable';
+            Rec.Priorite::Moyenne:
+                PrioriteStyle := 'Ambiguous';
+            Rec.Priorite::Haute:
+                PrioriteStyle := 'Unfavorable';
+        end;
+    end;
+
+    var
+        StatutStyle: Text;
+        PrioriteStyle: Text;
 }

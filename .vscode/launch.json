@@ -9,6 +9,7 @@
             "server": "http://localhost:8080/BC240/",
             "serverInstance": "BC240",
             "authentication": "Windows",
+            "schemaUpdateMode": "ForceSync",
             //"startupObjectId": 22,
             //"startupObjectType": "Page",
             "breakOnError": "All",

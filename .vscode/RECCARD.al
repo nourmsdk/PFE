@@ -1,4 +1,4 @@
-page 65000 "Reclamation Card"
+page 65000 "Reclamation Card PFE"
 {
     Caption = 'Fiche Réclamation Client Auto';
     PageType = Card;
@@ -12,13 +12,13 @@ page 65000 "Reclamation Card"
             group(General)
             {
                 Caption = 'Général';
-                group(ColonneGuauche)
+                group(ColonneGauche)
                 {
                     Caption = '';
                     ShowCaption = false;
                     field("No_"; Rec."No_")
                     {
-                        ApplicationArea = ALL;
+                        ApplicationArea = All;
                         Caption = 'N° Réclamation';
                         Importance = Promoted;
                     }
@@ -27,13 +27,11 @@ page 65000 "Reclamation Card"
                         ApplicationArea = All;
                         Caption = 'Description';
                         MultiLine = true;
-
                     }
                     field("No. Serie Vehicule"; Rec."No. Serie Vehicule")
                     {
                         ApplicationArea = All;
                         Caption = 'N° Série Véhicule';
-
                     }
                     field(VIN; Rec.VIN)
                     {
@@ -44,7 +42,6 @@ page 65000 "Reclamation Card"
                     {
                         ApplicationArea = All;
                         Caption = 'N° Enregistrement Véhicule';
-
                     }
                     field("No. Telephone"; Rec."No. Telephone")
                     {
@@ -55,38 +52,32 @@ page 65000 "Reclamation Card"
                     {
                         ApplicationArea = All;
                         Caption = 'N° Téléphone 2';
-
                     }
                     field("Code Categorie"; Rec."Code Categorie")
                     {
                         ApplicationArea = All;
                         Caption = 'Code Catégorie';
-
                     }
                     field("Description Categorie"; Rec."Description Categorie")
                     {
                         ApplicationArea = All;
                         Caption = 'Description Catégorie';
-
                     }
                     field("Code Sous Categorie"; Rec."Code Sous Categorie")
                     {
                         ApplicationArea = All;
                         Caption = 'Code Sous-Catégorie';
-
                     }
                     field("Description Sous Categorie"; Rec."Description Sous Categorie")
                     {
                         ApplicationArea = All;
                         Caption = 'Description Sous-Catégorie';
-
                     }
                     field("Groupe Utilisateur"; Rec."Groupe Utilisateur")
                     {
                         ApplicationArea = All;
                         Caption = 'Groupe Utilisateur';
                     }
-
                 }
                 group(ColonneDroite)
                 {
@@ -95,37 +86,35 @@ page 65000 "Reclamation Card"
                     field("Attribue A"; Rec."Attribue A")
                     {
                         ApplicationArea = All;
-                        Caption = 'Centre de Gestion';
+                        Caption = 'Attribué à';
                     }
                     field("Centre Gestion"; Rec."Centre Gestion")
                     {
                         ApplicationArea = All;
                         Caption = 'Centre de Gestion';
-
                     }
                     field("Date Creation"; Rec."Date Creation")
                     {
                         ApplicationArea = All;
                         Caption = 'Date Création';
-
                     }
                     field(Priorite; Rec.Priorite)
                     {
                         ApplicationArea = All;
                         Caption = 'Priorité';
-
+                        StyleExpr = PrioriteStyle;
                     }
                     field(Statut; Rec.Statut)
                     {
                         ApplicationArea = All;
                         Caption = 'Statut';
+                        StyleExpr = StatutStyle;
                     }
                     field("Description Action Prise"; Rec."Description Action Prise")
                     {
                         ApplicationArea = All;
                         Caption = 'Description Action Prise';
                         MultiLine = true;
-
                     }
                     field("Date Prise En Charge"; Rec."Date Prise En Charge")
                     {
@@ -146,13 +135,11 @@ page 65000 "Reclamation Card"
                     {
                         ApplicationArea = All;
                         Caption = 'Clôture sans Action';
-
                     }
                     field(Cloturee; Rec.Cloturee)
                     {
                         ApplicationArea = All;
                         Caption = 'Clôturée';
-
                     }
                     field("Retour Client"; Rec."Retour Client")
                     {
@@ -171,10 +158,9 @@ page 65000 "Reclamation Card"
                     }
                 }
             }
-
-
         }
     }
+
     actions
     {
         area(Processing)
@@ -189,9 +175,19 @@ page 65000 "Reclamation Card"
 
                 trigger OnAction()
                 begin
+                    if Rec.Description = '' then
+                        Error('Vous devez renseigner la "Description" avant de prendre en charge.');
+
+                    if Rec."Code Categorie" = '' then
+                        Error('Vous devez renseigner le "Code Catégorie" avant de prendre en charge.');
+
+                    if Rec.Statut = Rec.Statut::Cloturee then
+                        Error('Impossible de modifier une réclamation clôturée.');
+
                     Rec.Statut := Rec.Statut::"Prise en charge";
                     Rec."Date Prise En Charge" := Today();
                     Rec.Modify(true);
+                    Message('Réclamation prise en charge avec succès.');
                 end;
             }
             action(Cloturer)
@@ -204,17 +200,54 @@ page 65000 "Reclamation Card"
 
                 trigger OnAction()
                 begin
+                    if Rec."Description Action Prise" = '' then
+                        Error('Vous devez renseigner la "Description Action Prise" avant de clôturer.');
+
+                    if Rec."Date Cloture" <> 0D then
+                        if Rec."Date Cloture" < Rec."Date Creation" then
+                            Error('La date de clôture ne peut pas être antérieure à la date de création.');
+
+                    if Rec.Statut = Rec.Statut::Cloturee then
+                        Error('Cette réclamation est déjà clôturée.');
+
                     Rec.Statut := Rec.Statut::Cloturee;
                     Rec."Date Cloture" := Today();
                     Rec.Cloturee := true;
                     Rec.Modify(true);
+                    Message('Réclamation clôturée avec succès.');
                 end;
             }
         }
-
-
     }
 
+    trigger OnAfterGetRecord()
+    begin
+        case Rec.Statut of
+            Rec.Statut::" ":
+                StatutStyle := 'Standard';
+            Rec.Statut::Ouverte:
+                StatutStyle := 'Unfavorable';
+            Rec.Statut::"Prise en charge":
+                StatutStyle := 'Ambiguous';
+            Rec.Statut::"En cours":
+                StatutStyle := 'Ambiguous';
+            Rec.Statut::Cloturee:
+                StatutStyle := 'Favorable';
+        end;
 
+        case Rec.Priorite of
+            Rec.Priorite::" ":
+                PrioriteStyle := 'Standard';
+            Rec.Priorite::Faible:
+                PrioriteStyle := 'Favorable';
+            Rec.Priorite::Moyenne:
+                PrioriteStyle := 'Ambiguous';
+            Rec.Priorite::Haute:
+                PrioriteStyle := 'Unfavorable';
+        end;
+    end;
 
+    var
+        StatutStyle: Text;
+        PrioriteStyle: Text;
 }
