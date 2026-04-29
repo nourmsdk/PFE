@@ -18,73 +18,133 @@ page 65001 "Reclamation List PFE"
                     ApplicationArea = All;
                     Caption = 'N° Réclamation';
                 }
+
                 field(Description; Rec.Description)
                 {
                     ApplicationArea = All;
                     Caption = 'Description';
                 }
+
+                field("No. Client"; Rec."No. Client")
+                {
+                    ApplicationArea = All;
+                    Caption = 'N° Client';
+                }
+
+                field("Nom Client"; Rec."Nom Client")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Nom Client';
+                }
+
                 field("No. Serie Vehicule"; Rec."No. Serie Vehicule")
                 {
                     ApplicationArea = All;
                     Caption = 'N° Série Véhicule';
                 }
+
                 field("No. Telephone"; Rec."No. Telephone")
                 {
                     ApplicationArea = All;
                     Caption = 'N° Téléphone';
                 }
+
+                field(Canal; Rec.Canal)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Canal';
+                }
+
+                field("Type Reclamation"; Rec."Type Reclamation")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Type Réclamation';
+                }
+
                 field("Code Categorie"; Rec."Code Categorie")
                 {
                     ApplicationArea = All;
                     Caption = 'Code Catégorie';
                 }
-                field("Groupe Utilisateur"; Rec."Groupe Utilisateur")
+
+                field(Gravite; Rec.Gravite)
                 {
                     ApplicationArea = All;
-                    Caption = 'Groupe Utilisateur';
+                    Caption = 'Gravité';
                 }
+
+                field(Responsabilite; Rec.Responsabilite)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Responsabilité';
+                }
+
                 field("Attribue A"; Rec."Attribue A")
                 {
                     ApplicationArea = All;
                     Caption = 'Attribué à';
                 }
-                field("Centre Gestion"; Rec."Centre Gestion")
+
+                field(Agence; Rec.Agence)
                 {
                     ApplicationArea = All;
-                    Caption = 'Centre de Gestion';
+                    Caption = 'Agence';
                 }
+
                 field("Date Creation"; Rec."Date Creation")
                 {
                     ApplicationArea = All;
                     Caption = 'Date Création';
                 }
+
                 field(Priorite; Rec.Priorite)
                 {
                     ApplicationArea = All;
                     Caption = 'Priorité';
                     StyleExpr = PrioriteStyle;
                 }
+
                 field(Statut; Rec.Statut)
                 {
                     ApplicationArea = All;
                     Caption = 'Statut';
                     StyleExpr = StatutStyle;
                 }
+
                 field("Date Cloture"; Rec."Date Cloture")
                 {
                     ApplicationArea = All;
                     Caption = 'Date Clôture';
                 }
+
+                field("Delai Traitement"; Rec."Delai Traitement")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Délai (jours)';
+                }
+
+                // 👇 RECOMMANDÉ : cacher ce champ
                 field(Cloturee; Rec.Cloturee)
                 {
                     ApplicationArea = All;
-                    Caption = 'Clôturée';
+                    Visible = false;
                 }
+
                 field("Retour Client"; Rec."Retour Client")
                 {
                     ApplicationArea = All;
                     Caption = 'Retour Client';
                 }
+            }
+        }
+
+        // 🔥 AJOUT DU FACTBOX ICI
+        area(FactBoxes)
+        {
+            part(FactBoxRec; "Reclamation FactBox")
+            {
+                ApplicationArea = All;
+                SubPageLink = "No_" = FIELD("No_");
             }
         }
     }
@@ -111,21 +171,18 @@ page 65001 "Reclamation List PFE"
 
     trigger OnAfterGetRecord()
     begin
-        // Couleurs Statut
         case Rec.Statut of
             Rec.Statut::" ":
                 StatutStyle := 'Standard';
             Rec.Statut::Ouverte:
                 StatutStyle := 'Unfavorable';
-            Rec.Statut::"Prise en charge":
-                StatutStyle := 'Ambiguous';
+            Rec.Statut::"Prise en charge",
             Rec.Statut::"En cours":
                 StatutStyle := 'Ambiguous';
             Rec.Statut::Cloturee:
                 StatutStyle := 'Favorable';
         end;
 
-        // Couleurs Priorité
         case Rec.Priorite of
             Rec.Priorite::" ":
                 PrioriteStyle := 'Standard';

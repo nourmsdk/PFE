@@ -96,89 +96,135 @@ table 65000 "Reclamation"
             DataClassification = CustomerContent;
             Editable = false;
         }
-        field(12; "Groupe Utilisateur"; Code[20])
+        field(12; "No. Client"; Code[20])
         {
-            Caption = 'Groupe Utilisateur';
+            Caption = 'N° Client';
             DataClassification = CustomerContent;
+            TableRelation = Customer."No.";
+
+            trigger OnValidate()
+            var
+                Cust: Record Customer;
+            begin
+                if Cust.Get("No. Client") then
+                    "Nom Client" := Cust.Name
+                else
+                    "Nom Client" := '';
+            end;
         }
-        field(13; "Attribue A"; Code[50])
+        field(13; "Nom Client"; Text[100])
+        {
+            Caption = 'Nom Client';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(14; Canal; Option)
+        {
+            Caption = 'Canal';
+            DataClassification = CustomerContent;
+            OptionMembers = " ",SAV,Showroom,"Téléphone",Email,Web;
+            OptionCaption = ' ,SAV,Showroom,Téléphone,Email,Web';
+        }
+        field(15; "Type Reclamation"; Option)
+        {
+            Caption = 'Type Réclamation';
+            DataClassification = CustomerContent;
+            OptionMembers = " ",Technique,Commercial,Livraison,Garantie,"Pièce défectueuse";
+            OptionCaption = ' ,Technique,Commercial,Livraison,Garantie,Pièce défectueuse';
+        }
+        field(16; Gravite; Option)
+        {
+            Caption = 'Gravité';
+            DataClassification = CustomerContent;
+            OptionMembers = " ",Faible,Moyenne,Haute,Critique;
+            OptionCaption = ' ,Faible,Moyenne,Haute,Critique';
+        }
+        field(17; Responsabilite; Option)
+        {
+            Caption = 'Responsabilité';
+            DataClassification = CustomerContent;
+            OptionMembers = " ",Atelier,Vendeur,Constructeur,Fournisseur;
+            OptionCaption = ' ,Atelier,Vendeur,Constructeur,Fournisseur';
+        }
+        field(18; "Attribue A"; Code[50])
         {
             Caption = 'Attribué à';
             DataClassification = CustomerContent;
             TableRelation = User."User Name";
         }
-        field(14; "Centre Gestion"; Code[20])
+        field(19; Agence; Code[20])
         {
-            Caption = 'Centre de Gestion';
+            Caption = 'Agence';
             DataClassification = CustomerContent;
         }
-        field(15; "Date Creation"; Date)
+        field(20; "Date Creation"; Date)
         {
             Caption = 'Date Création';
             DataClassification = CustomerContent;
         }
-        field(16; Priorite; Option)
+        field(21; Priorite; Option)
         {
             Caption = 'Priorité';
             DataClassification = CustomerContent;
             OptionMembers = " ",Faible,Moyenne,Haute;
             OptionCaption = ' ,Faible,Moyenne,Haute';
         }
-        field(17; Statut; Option)
+        field(22; Statut; Option)
         {
             Caption = 'Statut';
             DataClassification = CustomerContent;
             OptionMembers = " ","Ouverte","Prise en charge","En cours","Cloturee";
             OptionCaption = ' ,Ouverte,Prise en charge,En cours,Clôturée';
         }
-        field(18; "Description Action Prise"; Text[250])
+        field(23; "Description Action Prise"; Text[250])
         {
             Caption = 'Description Action Prise';
             DataClassification = CustomerContent;
         }
-        field(19; "Date Prise En Charge"; Date)
+        field(24; "Date Prise En Charge"; Date)
         {
             Caption = 'Date de Prise en Charge';
             DataClassification = CustomerContent;
         }
-        field(20; "Date Validite"; Date)
+        field(25; "Date Validite"; Date)
         {
             Caption = 'Date Validité';
             DataClassification = CustomerContent;
         }
-        field(21; "Date Cloture"; Date)
+        field(26; "Date Cloture"; Date)
         {
             Caption = 'Date Clôture';
             DataClassification = CustomerContent;
         }
-        field(22; "Cloture Sans Action"; Boolean)
+        field(27; "Delai Traitement"; Integer)
         {
-            Caption = 'Clôture sans Action';
+            Caption = 'Délai Traitement (jours)';
             DataClassification = CustomerContent;
+            Editable = false;
         }
-        field(23; Cloturee; Boolean)
+        field(28; Cloturee; Boolean)
         {
             Caption = 'Clôturée';
             DataClassification = CustomerContent;
         }
-        field(24; "Retour Client"; Option)
+        field(29; "Retour Client"; Option)
         {
             Caption = 'Retour Client';
             DataClassification = CustomerContent;
             OptionMembers = " ",Satisfait,Insatisfait,"Sans retour";
             OptionCaption = ' ,Satisfait,Insatisfait,Sans retour';
         }
-        field(25; "Commande Service"; Code[20])
+        field(30; "No. Ordre Reparation"; Code[20])
         {
-            Caption = 'Commande Service';
+            Caption = 'N° Ordre Réparation';
             DataClassification = CustomerContent;
         }
-        field(26; "Commande Service Enregistre"; Code[20])
+        field(31; "No. Facture"; Code[20])
         {
-            Caption = 'Commande Service Enregistré';
+            Caption = 'N° Facture';
             DataClassification = CustomerContent;
         }
-        field(27; "No. Series"; Code[20])
+        field(32; "No. Series"; Code[20])
         {
             Caption = 'N° Souche';
             DataClassification = CustomerContent;
@@ -191,6 +237,9 @@ table 65000 "Reclamation"
         {
             Clustered = true;
         }
+        key(K2; Statut) { }
+        key(K3; "No. Client") { }
+        key(K4; "Date Creation") { }
     }
 
     trigger OnInsert()
@@ -205,6 +254,13 @@ table 65000 "Reclamation"
             "Date Creation" := Today();
         if "Attribue A" = '' then
             "Attribue A" := UserId();
+        Statut := Statut::Ouverte;
+    end;
+
+    trigger OnModify()
+    begin
+        if ("Date Cloture" <> 0D) and ("Date Creation" <> 0D) then
+            "Delai Traitement" := "Date Cloture" - "Date Creation";
     end;
 
     local procedure GetNoSeriesCode(): Code[20]
