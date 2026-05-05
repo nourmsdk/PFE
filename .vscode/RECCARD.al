@@ -77,7 +77,7 @@ page 65000 "Reclamation Card PFE"
                     field("Date Creation"; Rec."Date Creation")
                     {
                         ApplicationArea = All;
-                        Editable = true;   // ← temporaire pour tester
+                        Editable = false;
                     }
                 }
 
@@ -166,6 +166,10 @@ page 65000 "Reclamation Card PFE"
                         ApplicationArea = All;
                         Editable = EstModifiable;
                     }
+                    field("Nom Agence"; Rec."Nom Agence")
+                    {
+                        ApplicationArea = All;
+                    }
                 }
             }
         }
@@ -192,9 +196,8 @@ page 65000 "Reclamation Card PFE"
 
                     Rec.Statut := Rec.Statut::"Prise en charge";
                     Rec."Date Prise En Charge" := Today();
-                    if not Rec.Cloturee then
-                        Rec.CalculerDelaiTraitement();
-
+                    if not Rec.Cloturee then Rec.CalculerDelaiTraitement();
+                    Rec.Modify(true);
                     CurrPage.Update(true);
                 end;
             }
@@ -237,10 +240,9 @@ page 65000 "Reclamation Card PFE"
 
                 trigger OnAction()
                 begin
-                    if Rec."Description Action Prise" = '' then
-                        Error('Vous devez renseigner la Description Action Prise avant de clôturer la réclamation');
-                    if Rec."Code Categorie" = '' then
-                        Error('Vous devez renseigner le Code Catégorie avant de clôturer la réclamation.');
+                    if Rec."No. Client" = '' then Error('Vous devez associer un client avant de clôturer.');
+                    if Rec."Description Action Prise" = '' then Error('Vous devez renseigner la Description Action Prise avant de clôturer la réclamation');
+                    if Rec."Code Categorie" = '' then Error('Vous devez renseigner le Code Catégorie avant de clôturer la réclamation.');
 
                     Rec.Statut := Rec.Statut::Cloturee;
                     Rec."Date Cloture" := Today();
@@ -281,8 +283,7 @@ page 65000 "Reclamation Card PFE"
 
     trigger OnAfterGetRecord()
     begin
-        // Recalcul dynamique du délai à chaque affichage
-        Rec.CalculerDelaiTraitement();
+
         if not Rec.Cloturee then
             Rec.CalculerDelaiTraitement();
 

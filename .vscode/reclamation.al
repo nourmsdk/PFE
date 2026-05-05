@@ -214,6 +214,17 @@ table 65000 "Reclamation"
         {
             Caption = 'Agence';
             DataClassification = CustomerContent;
+            TableRelation = "Rec Agence".Code;
+
+            trigger OnValidate()
+            var
+                RecAgence: Record "Rec Agence";
+            begin
+                if RecAgence.Get(Agence) then
+                    "Nom Agence" := RecAgence.Nom
+                else
+                    "Nom Agence" := '';
+            end;
         }
         field(20; "Date Creation"; Date)
         {
@@ -305,17 +316,23 @@ table 65000 "Reclamation"
             DataClassification = CustomerContent;
             Editable = false;
         }
+        field(36; "Nom Agence"; Text[100])
+        {
+            Caption = 'Nom Agence';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
     }
 
     keys
     {
-        key(PK; "No_")
-        {
-            Clustered = true;
-        }
+        key(PK; "No_") { Clustered = true; }
         key(K2; Statut) { }
         key(K3; "No. Client") { }
         key(K4; "Date Creation") { }
+        key(K5; Agence) { }
+        key(K6; "Code Categorie") { }
+
     }
 
     trigger OnInsert()
