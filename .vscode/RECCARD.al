@@ -20,14 +20,11 @@ page 65000 "Reclamation Card PFE"
                     field("No_"; Rec."No_")
                     {
                         ApplicationArea = All;
-                        Caption = 'N° Réclamation';
-                        Importance = Promoted;
                     }
 
                     field(Description; Rec.Description)
                     {
                         ApplicationArea = All;
-                        Caption = 'Description';
                         Editable = EstModifiable;
                         MultiLine = true;
                     }
@@ -35,7 +32,6 @@ page 65000 "Reclamation Card PFE"
                     field("No. Client"; Rec."No. Client")
                     {
                         ApplicationArea = All;
-                        Caption = 'N° Client';
                         Editable = EstModifiable;
                     }
 
@@ -68,12 +64,6 @@ page 65000 "Reclamation Card PFE"
                         Editable = EstModifiable;
                     }
 
-                    field("No. Telephone 2"; Rec."No. Telephone 2")
-                    {
-                        ApplicationArea = All;
-                        Editable = EstModifiable;
-                    }
-
                     field("Code Categorie"; Rec."Code Categorie")
                     {
                         ApplicationArea = All;
@@ -84,18 +74,63 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                     }
-
-                    field("Code Sous Categorie"; Rec."Code Sous Categorie")
+                    field("Date Creation"; Rec."Date Creation")
                     {
                         ApplicationArea = All;
+                        Editable = true;   // ← temporaire pour tester
+                    }
+                }
+
+                group(ColonneDroite)
+                {
+                    ShowCaption = false;
+
+                    field(Statut; Rec.Statut)
+                    {
+                        ApplicationArea = All;
+                        StyleExpr = StatutStyle;
                         Editable = EstModifiable;
                     }
 
-                    field("Description Sous Categorie"; Rec."Description Sous Categorie")
+                    field(Priorite; Rec.Priorite)
+                    {
+                        ApplicationArea = All;
+                        StyleExpr = PrioriteStyle;
+                        Editable = EstModifiable;
+                    }
+
+                    field("Description Action Prise"; Rec."Description Action Prise")
+                    {
+                        ApplicationArea = All;
+                        Editable = EstModifiable;
+                        MultiLine = true;
+                    }
+
+                    field("Date Prise En Charge"; Rec."Date Prise En Charge")
                     {
                         ApplicationArea = All;
                     }
 
+                    field("Date Cloture"; Rec."Date Cloture")
+                    {
+                        ApplicationArea = All;
+                    }
+                    field("Date Mise En Cours"; Rec."Date Mise En Cours")
+                    {
+                        ApplicationArea = All;
+                    }
+                    field("Delai En Cours"; Rec."Delai En Cours")
+                    {
+                        ApplicationArea = All;
+                        StyleExpr = DelaiStyle;
+                    }
+
+                    field("Statut SLA"; HorsDelaiTexte)
+                    {
+                        ApplicationArea = All;
+                        StyleExpr = HorsDelaiStyle;
+                        Editable = false;
+                    }
                     field(Canal; Rec.Canal)
                     {
                         ApplicationArea = All;
@@ -120,23 +155,6 @@ page 65000 "Reclamation Card PFE"
                         Editable = EstModifiable;
                     }
 
-                    field("No. Facture"; Rec."No. Facture")
-                    {
-                        ApplicationArea = All;
-                        Editable = EstModifiable;
-                    }
-
-                    field("No. Ordre Reparation"; Rec."No. Ordre Reparation")
-                    {
-                        ApplicationArea = All;
-                        Editable = EstModifiable;
-                    }
-                }
-
-                group(ColonneDroite)
-                {
-                    ShowCaption = false;
-
                     field("Attribue A"; Rec."Attribue A")
                     {
                         ApplicationArea = All;
@@ -148,77 +166,7 @@ page 65000 "Reclamation Card PFE"
                         ApplicationArea = All;
                         Editable = EstModifiable;
                     }
-
-                    field("Date Creation"; Rec."Date Creation")
-                    {
-                        ApplicationArea = All;
-                    }
-
-                    field(Priorite; Rec.Priorite)
-                    {
-                        ApplicationArea = All;
-                        StyleExpr = PrioriteStyle;
-                        Editable = EstModifiable;
-                    }
-
-                    field(Statut; Rec.Statut)
-                    {
-                        ApplicationArea = All;
-                        Editable = EstModifiable;
-                        StyleExpr = StatutStyle;
-                    }
-
-                    field("Description Action Prise"; Rec."Description Action Prise")
-                    {
-                        ApplicationArea = All;
-                        Editable = EstModifiable;
-                        MultiLine = true;
-                    }
-
-                    field("Date Prise En Charge"; Rec."Date Prise En Charge")
-                    {
-                        ApplicationArea = All;
-                    }
-
-                    field("Date Validite"; Rec."Date Validite")
-                    {
-                        ApplicationArea = All;
-                        Editable = EstModifiable;
-                    }
-
-                    field("Date Cloture"; Rec."Date Cloture")
-                    {
-                        ApplicationArea = All;
-                    }
-
-                    field("Delai Traitement"; Rec."Delai Traitement")
-                    {
-                        ApplicationArea = All;
-                    }
-
-                    // 👇 INVISIBLE
-                    field(Cloturee; Rec.Cloturee)
-                    {
-                        ApplicationArea = All;
-                        Visible = false;
-                    }
-
-                    field("Retour Client"; Rec."Retour Client")
-                    {
-                        ApplicationArea = All;
-                        Editable = EstModifiable;
-                    }
                 }
-            }
-        }
-
-        // 🔥 FACTBOX AJOUTÉ ICI
-        area(FactBoxes)
-        {
-            part(FactBoxRec; "Reclamation FactBox")
-            {
-                ApplicationArea = All;
-                SubPageLink = "No_" = FIELD("No_");
             }
         }
     }
@@ -232,19 +180,47 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Caption = 'Prendre en Charge';
                 Image = Approve;
+
                 Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
 
                 trigger OnAction()
                 begin
-                    if Rec.Cloturee then
-                        Error('Impossible de modifier une réclamation clôturée.');
-
                     if Rec.Description = '' then
-                        Error('Renseigner la Description.');
+                        Error('Vous devez renseigner la Description Action Prise.');
 
                     Rec.Statut := Rec.Statut::"Prise en charge";
                     Rec."Date Prise En Charge" := Today();
+                    if not Rec.Cloturee then
+                        Rec.CalculerDelaiTraitement();
+
+                    CurrPage.Update(true);
+                end;
+            }
+            action(MettreEnCoursPFE)
+            {
+                ApplicationArea = All;
+                Caption = 'Mettre En Cours';
+                Image = Start;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                Enabled = (Rec.Statut = Rec.Statut::"Prise en charge");  // visible seulement si statut correct
+
+                trigger OnAction()
+                begin
+                    // Vérification du statut
+                    if Rec.Statut <> Rec.Statut::"Prise en charge" then
+                        Error('La réclamation doit être "Prise en charge" avant de la mettre En Cours.');
+
+                    // Changement de statut + date
+                    Rec.Statut := Rec.Statut::"En cours";
+                    Rec."Date Mise En Cours" := Today();
                     Rec.Modify(true);
+
+                    CurrPage.Update(true);
+                    Message('Réclamation passée En Cours.');
                 end;
             }
 
@@ -253,20 +229,51 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Caption = 'Clôturer';
                 Image = Close;
+
                 Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                Enabled = (Rec.Statut <> Rec.Statut::Cloturee) and (Rec."Code Categorie" <> '');
 
                 trigger OnAction()
                 begin
-                    if Rec.Cloturee then
-                        Error('Déjà clôturée.');
-
                     if Rec."Description Action Prise" = '' then
-                        Error('Renseigner Action.');
+                        Error('Vous devez renseigner la Description Action Prise avant de clôturer la réclamation');
+                    if Rec."Code Categorie" = '' then
+                        Error('Vous devez renseigner le Code Catégorie avant de clôturer la réclamation.');
 
                     Rec.Statut := Rec.Statut::Cloturee;
                     Rec."Date Cloture" := Today();
                     Rec.Cloturee := true;
+
                     Rec.Modify(true);
+
+                    CurrPage.Update(true);
+
+                end;
+            }
+
+            action(RouvrirPFE)
+            {
+                ApplicationArea = All;
+                Caption = 'Rouvrir';
+                Image = ReOpen;
+
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+
+                Enabled = (Rec.Statut = Rec.Statut::Cloturee);
+
+                trigger OnAction()
+                begin
+                    Rec.Statut := Rec.Statut::Ouverte;
+                    Rec."Date Cloture" := 0D;
+                    Rec.Cloturee := false;
+                    Rec.CalculerDelaiTraitement();
+                    Rec.Modify(true);
+                    CurrPage.Update(true);
+                    Message('Réclamation réouverte avec succès.');
                 end;
             }
         }
@@ -274,30 +281,64 @@ page 65000 "Reclamation Card PFE"
 
     trigger OnAfterGetRecord()
     begin
+        // Recalcul dynamique du délai à chaque affichage
+        Rec.CalculerDelaiTraitement();
+        if not Rec.Cloturee then
+            Rec.CalculerDelaiTraitement();
+
+        // Style Statut
         case Rec.Statut of
             Rec.Statut::Ouverte:
                 StatutStyle := 'Unfavorable';
+
             Rec.Statut::"Prise en charge",
             Rec.Statut::"En cours":
                 StatutStyle := 'Ambiguous';
+
             Rec.Statut::Cloturee:
                 StatutStyle := 'Favorable';
         end;
 
+        // Style Priorité
         case Rec.Priorite of
             Rec.Priorite::Faible:
                 PrioriteStyle := 'Favorable';
+
             Rec.Priorite::Moyenne:
                 PrioriteStyle := 'Ambiguous';
+
             Rec.Priorite::Haute:
                 PrioriteStyle := 'Unfavorable';
         end;
 
-        EstModifiable := not Rec.Cloturee;
+        // Style Délai + Hors Délai
+        if Rec."Hors Delai" then begin
+            DelaiStyle := 'Unfavorable';
+            HorsDelaiStyle := 'Unfavorable';
+        end else if Rec."Delai En Cours" > 5 then begin
+            DelaiStyle := 'Ambiguous';
+            HorsDelaiStyle := 'Standard';
+        end else begin
+            DelaiStyle := 'Favorable';
+            HorsDelaiStyle := 'Favorable';
+        end;
+
+        // Texte badge SLA
+        if Rec."Hors Delai" then
+            HorsDelaiTexte := ' HORS SLA'
+        else
+            HorsDelaiTexte := ' Dans les délais';
+
+        EstModifiable := (Rec.Statut <> Rec.Statut::Cloturee);
     end;
+
+
 
     var
         StatutStyle: Text;
         PrioriteStyle: Text;
+        DelaiStyle: Text;
+        HorsDelaiStyle: Text;
+        HorsDelaiTexte: Text;
         EstModifiable: Boolean;
 }

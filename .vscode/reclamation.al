@@ -44,6 +44,31 @@ table 65000 "Reclamation"
         {
             Caption = 'N° Téléphone';
             DataClassification = CustomerContent;
+
+            trigger OnValidate()
+            var
+                Cust: Record Customer;
+            begin
+                if "No. Telephone" = '' then
+                    exit;
+
+                // Chercher le client par téléphone principal
+                Cust.Reset();
+                Cust.SetRange("Phone No.", "No. Telephone");
+                if Cust.FindFirst() then begin
+                    "No. Client" := Cust."No.";
+                    "Nom Client" := Cust.Name;
+                    exit;
+                end;
+
+                // Si pas trouvé → chercher dans Mobile Phone No.
+                Cust.Reset();
+                Cust.SetRange("Mobile Phone No.", "No. Telephone");
+                if Cust.FindFirst() then begin
+                    "No. Client" := Cust."No.";
+                    "Nom Client" := Cust.Name;
+                end;
+            end;
         }
         field(7; "No. Telephone 2"; Text[20])
         {
@@ -106,10 +131,23 @@ table 65000 "Reclamation"
             var
                 Cust: Record Customer;
             begin
-                if Cust.Get("No. Client") then
-                    "Nom Client" := Cust.Name
-                else
+                if Cust.Get("No. Client") then begin
+                    // Nom (déjà existant)
+                    "Nom Client" := Cust.Name;
+
+                    // #4 – Téléphone principal : remplir seulement si le champ est vide
+                    if "No. Telephone" = '' then
+                        "No. Telephone" := Cust."Phone No.";
+
+                    // #4 – Téléphone 2 : depuis le champ "Mobile Phone No." du client
+                    if "No. Telephone 2" = '' then
+                        "No. Telephone 2" := Cust."Mobile Phone No.";
+
+                end else begin
                     "Nom Client" := '';
+                    // Ne pas vider le téléphone si le client est effacé
+                    // (choix : conserver la saisie manuelle)
+                end;
             end;
         }
         field(13; "Nom Client"; Text[100])
@@ -138,6 +176,26 @@ table 65000 "Reclamation"
             DataClassification = CustomerContent;
             OptionMembers = " ",Faible,Moyenne,Haute,Critique;
             OptionCaption = ' ,Faible,Moyenne,Haute,Critique';
+
+            trigger OnValidate()
+            begin
+                case Gravite of
+                    Gravite::Critique:
+                        Priorite := Priorite::Haute;
+
+                    Gravite::Haute:
+                        Priorite := Priorite::Haute;
+
+                    Gravite::Moyenne:
+                        Priorite := Priorite::Moyenne;
+
+                    Gravite::Faible:
+                        Priorite := Priorite::Faible;
+
+                    else
+                        Priorite := Priorite::" ";
+                end;
+            end;
         }
         field(17; Responsabilite; Option)
         {
@@ -229,6 +287,24 @@ table 65000 "Reclamation"
             Caption = 'N° Souche';
             DataClassification = CustomerContent;
         }
+        field(33; "Date Mise En Cours"; Date)
+        {
+            Caption = 'Date Mise En Cours';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(34; "Delai En Cours"; Integer)
+        {
+            Caption = 'Délai En Cours (jours)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(35; "Hors Delai"; Boolean)
+        {
+            Caption = 'Hors Délai SLA';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
     }
 
     keys
@@ -255,16 +331,38 @@ table 65000 "Reclamation"
         if "Attribue A" = '' then
             "Attribue A" := UserId();
         Statut := Statut::Ouverte;
+        Priorite := Priorite::Faible;
     end;
 
     trigger OnModify()
     begin
-        if ("Date Cloture" <> 0D) and ("Date Creation" <> 0D) then
-            "Delai Traitement" := "Date Cloture" - "Date Creation";
+        CalculerDelaiTraitement();
     end;
 
     local procedure GetNoSeriesCode(): Code[20]
     begin
         exit('RECPFE');
+    end;
+
+    procedure CalculerDelaiTraitement()
+    begin
+        if "Date Creation" <> 0D then begin
+            // Si clôturée → délai figé jusqu'à la date clôture
+            if ("Date Cloture" <> 0D) and (Cloturee) then
+                "Delai En Cours" := "Date Cloture" - "Date Creation"
+            else
+                // Sinon → délai dynamique depuis aujourd'hui
+                "Delai En Cours" := Today() - "Date Creation";
+        end;
+
+        // Délai final uniquement à la clôture
+        if ("Date Cloture" <> 0D) and (Cloturee) then
+            "Delai Traitement" := "Date Cloture" - "Date Creation";
+
+        // SLA 7 jours
+        if ("Delai En Cours" > 7) and (not Cloturee) then
+            "Hors Delai" := true
+        else
+            "Hors Delai" := false;
     end;
 }
