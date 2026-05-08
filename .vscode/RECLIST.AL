@@ -105,6 +105,12 @@ page 65001 "Reclamation List PFE"
                     ApplicationArea = All;
                     Caption = 'Délai (jours)';
                 }
+                field("Statut SLA"; HorsDelaiTexte)
+                {
+                    ApplicationArea = All;
+                    StyleExpr = HorsDelaiStyle;
+                    Editable = false;
+                }
                 field(Cloturee; Rec.Cloturee)
                 {
                     ApplicationArea = All;
@@ -118,6 +124,7 @@ page 65001 "Reclamation List PFE"
                 }
             }
         }
+
         area(FactBoxes)
         {
             part(ReclamationFactBox; "Reclamation FactBox")
@@ -127,6 +134,7 @@ page 65001 "Reclamation List PFE"
             }
         }
     }
+
 
     actions
     {
@@ -172,9 +180,18 @@ page 65001 "Reclamation List PFE"
             Rec.Priorite::Haute:
                 PrioriteStyle := 'Unfavorable';
         end;
+        if Rec."Hors Delai" then begin
+            HorsDelaiTexte := 'HORS SLA';
+            HorsDelaiStyle := 'Unfavorable';
+        end else begin
+            HorsDelaiTexte := 'OK';
+            HorsDelaiStyle := 'Favorable';
+        end;
     end;
 
     var
         StatutStyle: Text;
         PrioriteStyle: Text;
+        HorsDelaiStyle: Text;
+        HorsDelaiTexte: Text;
 }

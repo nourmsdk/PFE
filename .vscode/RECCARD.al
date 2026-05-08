@@ -69,10 +69,29 @@ page 65000 "Reclamation Card PFE"
                         ApplicationArea = All;
                         Editable = EstModifiable;
                     }
+                    field("Code Sous Categorie"; Rec."Code Sous Categorie")
+                    {
+                        ApplicationArea = All;
+                        Editable = EstModifiable;
+                    }
+                    field("Description Sous Categorie"; Rec."Description Sous Categorie")
+                    {
+                        ApplicationArea = All;
+                    }
 
                     field("Description Categorie"; Rec."Description Categorie")
                     {
                         ApplicationArea = All;
+                    }
+                    field("No. Ordre Reparation"; Rec."No. Ordre Reparation")
+                    {
+                        ApplicationArea = All;
+                        Editable = EstModifiable;
+                    }
+                    field("No. Facture"; Rec."No. Facture")
+                    {
+                        ApplicationArea = All;
+                        Editable = EstModifiable;
                     }
                     field("Date Creation"; Rec."Date Creation")
                     {
@@ -115,6 +134,11 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                     }
+                    field("Retour Client"; Rec."Retour Client")
+                    {
+                        ApplicationArea = All;
+                        Editable = EstModifiable;
+                    }
                     field("Date Mise En Cours"; Rec."Date Mise En Cours")
                     {
                         ApplicationArea = All;
@@ -147,6 +171,7 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                         Editable = EstModifiable;
+                        StyleExpr = GraviteStyle;
                     }
 
                     field(Responsabilite; Rec.Responsabilite)
@@ -173,6 +198,20 @@ page 65000 "Reclamation Card PFE"
                 }
             }
         }
+        area(FactBoxes)
+        {
+            part(ReclamationFactBox; "Reclamation FactBox")
+            {
+                ApplicationArea = All;
+                Caption = 'Indicateurs';
+            }
+            part(HistoriqueClientFB; "Rec Historique Client FB")
+            {
+                ApplicationArea = All;
+                Caption = 'Historique Client';
+                SubPageLink = "No. Client" = field("No. Client");
+            }
+        }
     }
 
     actions
@@ -181,6 +220,7 @@ page 65000 "Reclamation Card PFE"
         {
             action(PrendreEnChargePFE)
             {
+                Enabled = (Rec.Statut = Rec.Statut::Ouverte);
                 ApplicationArea = All;
                 Caption = 'Prendre en Charge';
                 Image = Approve;
@@ -203,13 +243,14 @@ page 65000 "Reclamation Card PFE"
             }
             action(MettreEnCoursPFE)
             {
+                Enabled = (Rec.Statut = Rec.Statut::"Prise en charge");  // visible seulement si statut correct
                 ApplicationArea = All;
                 Caption = 'Mettre En Cours';
                 Image = Start;
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
-                Enabled = (Rec.Statut = Rec.Statut::"Prise en charge");  // visible seulement si statut correct
+
 
                 trigger OnAction()
                 begin
@@ -311,6 +352,16 @@ page 65000 "Reclamation Card PFE"
             Rec.Priorite::Haute:
                 PrioriteStyle := 'Unfavorable';
         end;
+        case Rec.Gravite of
+            Rec.Gravite::Critique:
+                GraviteStyle := 'Unfavorable';
+            Rec.Gravite::Haute:
+                GraviteStyle := 'Attention';
+            Rec.Gravite::Moyenne:
+                GraviteStyle := 'Ambiguous';
+            Rec.Gravite::Faible:
+                GraviteStyle := 'Favorable';
+        end;
 
         // Style Délai + Hors Délai
         if Rec."Hors Delai" then begin
@@ -335,11 +386,13 @@ page 65000 "Reclamation Card PFE"
 
 
 
+
     var
         StatutStyle: Text;
         PrioriteStyle: Text;
         DelaiStyle: Text;
         HorsDelaiStyle: Text;
         HorsDelaiTexte: Text;
+        GraviteStyle: Text;
         EstModifiable: Boolean;
 }
