@@ -39,6 +39,13 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                     }
+                    field(NbReclamationsClient; NbReclamationsClient)
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Total réclamations client';
+                        Editable = false;
+                        StyleExpr = NbReclamStyle;
+                    }
 
                     field("No. Serie Vehicule"; Rec."No. Serie Vehicule")
                     {
@@ -313,13 +320,47 @@ page 65000 "Reclamation Card PFE"
                     Rec.Statut := Rec.Statut::Ouverte;
                     Rec."Date Cloture" := 0D;
                     Rec.Cloturee := false;
+                    Rec."Notification Envoyee" := false;
                     Rec.CalculerDelaiTraitement();
                     Rec.Modify(true);
                     CurrPage.Update(true);
                     Message('Réclamation réouverte avec succès.');
                 end;
             }
+
+            action(NotifierClientPFE)
+            {
+                ApplicationArea = All;
+                Caption = 'Notifier Client';
+                Image = Email;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                Enabled = (Rec."No. Client" <> '');
+
+                trigger OnAction()
+                var
+                    Cust: Record Customer;
+                begin
+                    if Rec."No. Client" = '' then
+                        Error('Aucun client associé à cette réclamation.');
+
+                    if Cust.Get(Rec."No. Client") then begin
+                        if Cust."E-Mail" = '' then
+                            Error('Le client %1 n''a pas d''adresse email.', Cust.Name);
+
+                        HyperLink(
+                            'mailto:' + Cust."E-Mail" +
+                            '?subject=Réclamation ' + Rec."No_" +
+                            '&body=Bonjour ' + Rec."Nom Client" +
+                            ', suite à votre réclamation ' + Rec."No_" + '.'
+                        );
+                    end;
+                end;
+            }
+
         }
+
     }
 
     trigger OnAfterGetRecord()
@@ -381,6 +422,24 @@ page 65000 "Reclamation Card PFE"
         else
             HorsDelaiTexte := ' Dans les délais';
 
+        if Rec."Hors Delai" and (not Rec.Cloturee) then
+            Rec.NotifierHorsSLA();
+        if Rec."No. Client" <> '' then begin
+            Rec2.Reset();
+            Rec2.SetRange("No. Client", Rec."No. Client");
+            NbReclamationsClient := Rec2.Count();
+        end else
+            NbReclamationsClient := 0;
+
+        // Couleur selon le nombre
+        if NbReclamationsClient >= 5 then
+            NbReclamStyle := 'Unfavorable'    // rouge — client récidiviste
+        else if NbReclamationsClient >= 2 then
+            NbReclamStyle := 'Ambiguous'      // orange — à surveiller
+        else
+            NbReclamStyle := 'Favorable';     // vert — client tranquille
+
+
         EstModifiable := (Rec.Statut <> Rec.Statut::Cloturee);
     end;
 
@@ -395,4 +454,7 @@ page 65000 "Reclamation Card PFE"
         HorsDelaiTexte: Text;
         GraviteStyle: Text;
         EstModifiable: Boolean;
+        NbReclamationsClient: Integer;
+        NbReclamStyle: Text;
+        Rec2: Record Reclamation;
 }

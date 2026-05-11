@@ -18,6 +18,8 @@ table 65000 "Reclamation"
                     NoSeries.TestManual(GetNoSeriesCode());
                     "No. Series" := '';
                 end;
+
+
             end;
         }
         field(2; Description; Text[250])
@@ -34,6 +36,13 @@ table 65000 "Reclamation"
         {
             Caption = 'VIN';
             DataClassification = CustomerContent;
+
+            trigger OnValidate()
+            begin
+                if (VIN <> '') and (StrLen(VIN) <> 17) then
+                    Error('Le VIN doit contenir exactement 17 caractères. Valeur saisie : %1 (%2 caractères)',
+                        VIN, StrLen(VIN));
+            end;
         }
         field(5; "No. Enregistrement Vehicule"; Code[20])
         {
@@ -48,11 +57,17 @@ table 65000 "Reclamation"
             trigger OnValidate()
             var
                 Cust: Record Customer;
+                i: Integer;
             begin
                 if "No. Telephone" = '' then
                     exit;
 
-                // Chercher le client par téléphone principal
+                // 1 — Validation format AVANT la recherche
+                for i := 1 to StrLen("No. Telephone") do
+                    if not ("No. Telephone"[i] in ['0' .. '9', '+', ' ', '-']) then
+                        Error('N° Téléphone invalide. Utilisez uniquement des chiffres, +, espace ou -.');
+
+                // 2 — Recherche client par téléphone principal
                 Cust.Reset();
                 Cust.SetRange("Phone No.", "No. Telephone");
                 if Cust.FindFirst() then begin
@@ -61,7 +76,7 @@ table 65000 "Reclamation"
                     exit;
                 end;
 
-                // Si pas trouvé → chercher dans Mobile Phone No.
+                // 3 — Recherche client par mobile
                 Cust.Reset();
                 Cust.SetRange("Mobile Phone No.", "No. Telephone");
                 if Cust.FindFirst() then begin
@@ -74,6 +89,19 @@ table 65000 "Reclamation"
         {
             Caption = 'N° Téléphone 2';
             DataClassification = CustomerContent;
+
+            trigger OnValidate()
+            var
+                i: Integer;
+            begin
+                if "No. Telephone 2" = '' then
+                    exit;
+
+                // Validation format
+                for i := 1 to StrLen("No. Telephone 2") do
+                    if not ("No. Telephone 2"[i] in ['0' .. '9', '+', ' ', '-']) then
+                        Error('N° Téléphone 2 invalide. Utilisez uniquement des chiffres, +, espace ou -.');
+            end;
         }
         field(8; "Code Categorie"; Code[20])
         {
@@ -322,6 +350,12 @@ table 65000 "Reclamation"
             DataClassification = CustomerContent;
             Editable = false;
         }
+        field(37; "Notification Envoyee"; Boolean)
+        {
+            Caption = 'Notification SLA envoyée';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
     }
 
     keys
@@ -356,30 +390,68 @@ table 65000 "Reclamation"
         CalculerDelaiTraitement();
     end;
 
+
     local procedure GetNoSeriesCode(): Code[20]
     begin
         exit('RECPFE');
     end;
 
     procedure CalculerDelaiTraitement()
+    var
+        RecParam: Record "Rec Parametres";
+        SLAJours: Integer;
     begin
         if "Date Creation" <> 0D then begin
-            // Si clôturée → délai figé jusqu'à la date clôture
             if ("Date Cloture" <> 0D) and (Cloturee) then
                 "Delai En Cours" := "Date Cloture" - "Date Creation"
             else
-                // Sinon → délai dynamique depuis aujourd'hui
                 "Delai En Cours" := Today() - "Date Creation";
         end;
 
-        // Délai final uniquement à la clôture
         if ("Date Cloture" <> 0D) and (Cloturee) then
             "Delai Traitement" := "Date Cloture" - "Date Creation";
 
-        // SLA 7 jours
-        if ("Delai En Cours" > 7) and (not Cloturee) then
+        // SLA configurable
+        if RecParam.Get('DEFAULT') then
+            SLAJours := RecParam."SLA Jours"
+        else
+            SLAJours := 7;
+
+        if ("Delai En Cours" > SLAJours) and (not Cloturee) then
             "Hors Delai" := true
         else
             "Hors Delai" := false;
+
+        // Notification si hors SLA
+        if "Hors Delai" then
+            NotifierHorsSLA();
+    end;
+
+    procedure NotifierHorsSLA()
+    var
+        NotifMsg: Text;
+    begin
+        if not "Hors Delai" then
+            exit;
+        if Cloturee then
+            exit;
+        if "Attribue A" = '' then
+            exit;
+        if "Notification Envoyee" then
+            exit;
+
+        NotifMsg := StrSubstNo(
+            'ALERTE SLA — Réclamation %1 du %2 dépasse %3 jours.\Client : %4\Agence : %5',
+            "No_",
+            "Date Creation",
+            "Delai En Cours",
+            "Nom Client",
+            Agence
+        );
+
+        Message(NotifMsg);
+
+        "Notification Envoyee" := true;
+        Modify(false);
     end;
 }
