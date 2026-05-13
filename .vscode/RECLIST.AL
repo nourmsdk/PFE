@@ -95,6 +95,11 @@ page 65001 "Reclamation List PFE"
                     Caption = 'Statut';
                     StyleExpr = StatutStyle;
                 }
+                field("Etape Workflow"; Rec."Etape Workflow")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Étape Workflow';
+                }
                 field("Date Cloture"; Rec."Date Cloture")
                 {
                     ApplicationArea = All;

@@ -31,6 +31,28 @@ table 65000 "Reclamation"
         {
             Caption = 'N° Série Véhicule';
             DataClassification = CustomerContent;
+            trigger OnValidate()
+            var
+                Veh: Record Vehicle;
+                Cust: Record Customer;
+            begin
+                if "No. Serie Vehicule" = '' then exit;
+
+                if Veh.Get("No. Serie Vehicule") then begin
+                    VIN := Veh.VIN;
+                    "No. Enregistrement Vehicule" := Veh."Registration No.";
+
+                    // Remplir client si pas déjà renseigné
+                    if "No. Client" = '' then begin
+                        "No. Client" := Veh."Customer No.";
+                        if Cust.Get("No. Client") then begin
+                            "Nom Client" := Cust.Name;
+                            if "No. Telephone" = '' then
+                                "No. Telephone" := Cust."Phone No.";
+                        end;
+                    end;
+                end;
+            end;
         }
         field(4; VIN; Code[20])
         {
@@ -38,10 +60,28 @@ table 65000 "Reclamation"
             DataClassification = CustomerContent;
 
             trigger OnValidate()
+            var
+                Veh: Record Vehicle;
+                Cust: Record Customer;
             begin
-                if (VIN <> '') and (StrLen(VIN) <> 17) then
-                    Error('Le VIN doit contenir exactement 17 caractères. Valeur saisie : %1 (%2 caractères)',
-                        VIN, StrLen(VIN));
+                if VIN = '' then exit;
+
+                Veh.Reset();
+                Veh.SetRange(VIN, VIN);
+                if Veh.FindFirst() then begin
+                    "No. Serie Vehicule" := Veh."Serial No.";
+                    "No. Enregistrement Vehicule" := Veh."Registration No.";
+
+                    // Remplir client si pas déjà renseigné
+                    if "No. Client" = '' then begin
+                        "No. Client" := Veh."Customer No.";
+                        if Cust.Get("No. Client") then begin
+                            "Nom Client" := Cust.Name;
+                            if "No. Telephone" = '' then
+                                "No. Telephone" := Cust."Phone No.";
+                        end;
+                    end;
+                end;
             end;
         }
         field(5; "No. Enregistrement Vehicule"; Code[20])
@@ -158,23 +198,49 @@ table 65000 "Reclamation"
             trigger OnValidate()
             var
                 Cust: Record Customer;
+                Veh: Record Vehicle;
+                VehList: Page "Vehicle List";
             begin
+                // Nom client
                 if Cust.Get("No. Client") then begin
-                    // Nom (déjà existant)
                     "Nom Client" := Cust.Name;
-
-                    // #4 – Téléphone principal : remplir seulement si le champ est vide
                     if "No. Telephone" = '' then
                         "No. Telephone" := Cust."Phone No.";
-
-                    // #4 – Téléphone 2 : depuis le champ "Mobile Phone No." du client
                     if "No. Telephone 2" = '' then
                         "No. Telephone 2" := Cust."Mobile Phone No.";
-
                 end else begin
                     "Nom Client" := '';
-                    // Ne pas vider le téléphone si le client est effacé
-                    // (choix : conserver la saisie manuelle)
+                    exit;
+                end;
+
+                // Recherche véhicules liés au client
+                Veh.Reset();
+                Veh.SetRange("Customer No.", "No. Client");
+
+                case Veh.Count of
+                    0:
+                        // Aucun véhicule → rien
+                        exit;
+                    1:
+                        begin
+                            // 1 seul véhicule → remplissage auto
+                            Veh.FindFirst();
+                            "No. Serie Vehicule" := Veh."Serial No.";
+                            VIN := Veh.VIN;
+                            "No. Enregistrement Vehicule" := Veh."Registration No.";
+                        end;
+                    else begin
+                        // Plusieurs véhicules → liste de choix
+                        Veh.FindFirst();
+                        VehList.SetTableView(Veh);
+                        VehList.LookupMode(true);
+                        if VehList.RunModal() = Action::LookupOK then begin
+                            VehList.GetRecord(Veh);
+                            "No. Serie Vehicule" := Veh."Serial No.";
+                            VIN := Veh.VIN;
+                            "No. Enregistrement Vehicule" := Veh."Registration No.";
+                        end;
+                    end;
                 end;
             end;
         }
@@ -356,6 +422,14 @@ table 65000 "Reclamation"
             DataClassification = CustomerContent;
             Editable = false;
         }
+        field(38; "Etape Workflow"; Option)
+        {
+            Caption = 'Étape Workflow';
+            DataClassification = CustomerContent;
+            OptionMembers = Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
+            OptionCaption = 'Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
+
+        }
     }
 
     keys
@@ -383,6 +457,7 @@ table 65000 "Reclamation"
             "Attribue A" := UserId();
         Statut := Statut::Ouverte;
         Priorite := Priorite::Faible;
+        "Etape Workflow" := "Etape Workflow"::Ouverture;
     end;
 
     trigger OnModify()

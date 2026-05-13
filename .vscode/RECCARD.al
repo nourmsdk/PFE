@@ -33,6 +33,7 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                         Editable = EstModifiable;
+
                     }
 
                     field("Nom Client"; Rec."Nom Client")
@@ -115,6 +116,12 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                         StyleExpr = StatutStyle;
+                        Editable = EstModifiable;
+                    }
+                    field("Etape Workflow"; Rec."Etape Workflow")
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Étape Workflow';
                         Editable = EstModifiable;
                     }
 
@@ -202,6 +209,7 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                     }
+
                 }
             }
         }
@@ -239,6 +247,9 @@ page 65000 "Reclamation Card PFE"
                 trigger OnAction()
                 begin
                     if Rec.Description = '' then
+                        Error('Vous devez renseigner la Description de la réclamation.');
+
+                    if Rec."Description Action Prise" = '' then
                         Error('Vous devez renseigner la Description Action Prise.');
 
                     Rec.Statut := Rec.Statut::"Prise en charge";
@@ -443,6 +454,11 @@ page 65000 "Reclamation Card PFE"
         EstModifiable := (Rec.Statut <> Rec.Statut::Cloturee);
     end;
 
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        CurrPage.Editable := true;
+        EstModifiable := true;
+    end;
 
 
 
