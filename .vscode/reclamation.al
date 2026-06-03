@@ -424,11 +424,8 @@ table 65000 "Reclamation"
         }
         field(38; "Etape Workflow"; Option)
         {
-            Caption = 'Étape Workflow';
-            DataClassification = CustomerContent;
-            OptionMembers = Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
-            OptionCaption = 'Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
-
+            OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
+            OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
         }
     }
 
@@ -446,6 +443,7 @@ table 65000 "Reclamation"
     trigger OnInsert()
     var
         NoSeries: Codeunit "No. Series";
+        HistLine: Record "Rec Workflow History";
     begin
         if "No_" = '' then begin
             "No_" := NoSeries.GetNextNo(GetNoSeriesCode(), Today(), true);
@@ -458,10 +456,37 @@ table 65000 "Reclamation"
         Statut := Statut::Ouverte;
         Priorite := Priorite::Faible;
         "Etape Workflow" := "Etape Workflow"::Ouverture;
+
+        // Tracer la création
+        HistLine.Init();
+        HistLine."No. Reclamation" := "No_";
+        HistLine."Date Heure" := CurrentDateTime();
+        HistLine."Etape Precedente" := "Etape Workflow"::Ouverture;
+        HistLine."Etape Suivante" := "Etape Workflow"::Ouverture;
+        HistLine."Statut Precedent" := Statut::" ";
+        HistLine."Statut Suivant" := Statut::Ouverte;
+        HistLine."User ID" := UserId();
+        HistLine.Commentaire := 'Création de la réclamation';
+        HistLine.Insert(true);
     end;
 
     trigger OnModify()
+    var
+        HistLine: Record "Rec Workflow History";
     begin
+        // Tracer changement de statut OU d'étape workflow
+        if (Statut <> xRec.Statut) or ("Etape Workflow" <> xRec."Etape Workflow") then begin
+            HistLine.Init();
+            HistLine."No. Reclamation" := "No_";
+            HistLine."Date Heure" := CurrentDateTime();
+            HistLine."Etape Precedente" := xRec."Etape Workflow";
+            HistLine."Etape Suivante" := "Etape Workflow";
+            HistLine."Statut Precedent" := xRec.Statut;
+            HistLine."Statut Suivant" := Statut;
+            HistLine."User ID" := UserId();
+            HistLine.Insert(true);
+        end;
+
         CalculerDelaiTraitement();
     end;
 
@@ -475,16 +500,23 @@ table 65000 "Reclamation"
     var
         RecParam: Record "Rec Parametres";
         SLAJours: Integer;
+        DateDebut: Date;
     begin
-        if "Date Creation" <> 0D then begin
+        // Choisir la date de départ : Prise en Charge si dispo, sinon Création
+        if "Date Prise En Charge" <> 0D then
+            DateDebut := "Date Prise En Charge"
+        else
+            DateDebut := "Date Creation";
+
+        if DateDebut <> 0D then begin
             if ("Date Cloture" <> 0D) and (Cloturee) then
-                "Delai En Cours" := "Date Cloture" - "Date Creation"
+                "Delai En Cours" := "Date Cloture" - DateDebut
             else
-                "Delai En Cours" := Today() - "Date Creation";
+                "Delai En Cours" := Today() - DateDebut;
         end;
 
         if ("Date Cloture" <> 0D) and (Cloturee) then
-            "Delai Traitement" := "Date Cloture" - "Date Creation";
+            "Delai Traitement" := "Date Cloture" - DateDebut;
 
         // SLA configurable
         if RecParam.Get('DEFAULT') then
@@ -496,33 +528,33 @@ table 65000 "Reclamation"
             "Hors Delai" := true
         else
             "Hors Delai" := false;
-
-        // Notification si hors SLA
-        if "Hors Delai" then
-            NotifierHorsSLA();
     end;
 
     procedure NotifierHorsSLA()
     var
         NotifMsg: Text;
+        NotifLog: Record "Rec Notification Log";
     begin
-        if not "Hors Delai" then
-            exit;
-        if Cloturee then
-            exit;
-        if "Attribue A" = '' then
-            exit;
-        if "Notification Envoyee" then
-            exit;
+        if not "Hors Delai" then exit;
+        if Cloturee then exit;
+        if "Attribue A" = '' then exit;
+        if "Notification Envoyee" then exit;
 
         NotifMsg := StrSubstNo(
-            'ALERTE SLA — Réclamation %1 du %2 dépasse %3 jours.\Client : %4\Agence : %5',
-            "No_",
-            "Date Creation",
-            "Delai En Cours",
-            "Nom Client",
-            Agence
+            'ALERTE SLA — Réclamation %1 du %2 dépasse %3 jours. Client : %4 / Agence : %5',
+            "No_", "Date Creation", "Delai En Cours", "Nom Client", Agence
         );
+
+        // Insérer dans le log de notifications
+        NotifLog.Init();
+        NotifLog."No. Reclamation" := "No_";
+        NotifLog."Date Heure" := CurrentDateTime();
+        NotifLog."Type Notification" := NotifLog."Type Notification"::"Hors SLA";
+        NotifLog.Message := CopyStr(NotifMsg, 1, 500);
+        NotifLog.Destinataire := "Attribue A";
+        NotifLog."No. Client" := "No. Client";
+        NotifLog.Processed := false;
+        NotifLog.Insert(true);
 
         Message(NotifMsg);
 

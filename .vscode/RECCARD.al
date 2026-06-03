@@ -226,6 +226,18 @@ page 65000 "Reclamation Card PFE"
                 Caption = 'Historique Client';
                 SubPageLink = "No. Client" = field("No. Client");
             }
+            part(WorkflowHistoryFB; "Rec Workflow History FB")
+            {
+                ApplicationArea = All;
+                Caption = 'Historique Workflow';
+                SubPageLink = "No. Reclamation" = field("No_");
+            }
+            part(NotificationLogFB; "Rec Notification Log FB")
+            {
+                ApplicationArea = All;
+                Caption = 'Notifications';
+                SubPageLink = "No. Reclamation" = field("No_");
+            }
         }
     }
 
@@ -239,18 +251,31 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Caption = 'Prendre en Charge';
                 Image = Approve;
-
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
 
                 trigger OnAction()
+                var
+                    NotifLog: Record "Rec Notification Log";
                 begin
                     if Rec.Description = '' then
                         Error('Vous devez renseigner la Description de la réclamation.');
-
                     if Rec."Description Action Prise" = '' then
                         Error('Vous devez renseigner la Description Action Prise.');
+
+                    // Notification
+                    NotifLog.Init();
+                    NotifLog."No. Reclamation" := Rec."No_";
+                    NotifLog."Date Heure" := CurrentDateTime();
+                    NotifLog."Type Notification" := NotifLog."Type Notification"::"Confirmation Client";
+                    NotifLog.Message := CopyStr(StrSubstNo(
+                        'Réclamation %1 prise en charge par %2',
+                        Rec."No_", UserId()), 1, 500);
+                    NotifLog.Destinataire := Rec."Attribue A";
+                    NotifLog."No. Client" := Rec."No. Client";
+                    NotifLog.Processed := false;
+                    NotifLog.Insert(true);
 
                     Rec.Statut := Rec.Statut::"Prise en charge";
                     Rec."Date Prise En Charge" := Today();
@@ -259,9 +284,10 @@ page 65000 "Reclamation Card PFE"
                     CurrPage.Update(true);
                 end;
             }
+
             action(MettreEnCoursPFE)
             {
-                Enabled = (Rec.Statut = Rec.Statut::"Prise en charge");  // visible seulement si statut correct
+                Enabled = (Rec.Statut = Rec.Statut::"Prise en charge");
                 ApplicationArea = All;
                 Caption = 'Mettre En Cours';
                 Image = Start;
@@ -269,18 +295,29 @@ page 65000 "Reclamation Card PFE"
                 PromotedCategory = Process;
                 PromotedIsBig = true;
 
-
                 trigger OnAction()
+                var
+                    NotifLog: Record "Rec Notification Log";
                 begin
-                    // Vérification du statut
                     if Rec.Statut <> Rec.Statut::"Prise en charge" then
                         Error('La réclamation doit être "Prise en charge" avant de la mettre En Cours.');
 
-                    // Changement de statut + date
+                    // Notification
+                    NotifLog.Init();
+                    NotifLog."No. Reclamation" := Rec."No_";
+                    NotifLog."Date Heure" := CurrentDateTime();
+                    NotifLog."Type Notification" := NotifLog."Type Notification"::"Confirmation Client";
+                    NotifLog.Message := CopyStr(StrSubstNo(
+                        'Réclamation %1 mise En Cours par %2',
+                        Rec."No_", UserId()), 1, 500);
+                    NotifLog.Destinataire := Rec."Attribue A";
+                    NotifLog."No. Client" := Rec."No. Client";
+                    NotifLog.Processed := false;
+                    NotifLog.Insert(true);
+
                     Rec.Statut := Rec.Statut::"En cours";
                     Rec."Date Mise En Cours" := Today();
                     Rec.Modify(true);
-
                     CurrPage.Update(true);
                     Message('Réclamation passée En Cours.');
                 end;
@@ -291,26 +328,56 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Caption = 'Clôturer';
                 Image = Close;
-
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
                 Enabled = (Rec.Statut <> Rec.Statut::Cloturee) and (Rec."Code Categorie" <> '');
 
                 trigger OnAction()
+                var
+                    NotifLog: Record "Rec Notification Log";
                 begin
-                    if Rec."No. Client" = '' then Error('Vous devez associer un client avant de clôturer.');
-                    if Rec."Description Action Prise" = '' then Error('Vous devez renseigner la Description Action Prise avant de clôturer la réclamation');
-                    if Rec."Code Categorie" = '' then Error('Vous devez renseigner le Code Catégorie avant de clôturer la réclamation.');
+                    if Rec."No. Client" = '' then
+                        Error('Vous devez associer un client avant de clôturer.');
+                    if Rec."Description Action Prise" = '' then
+                        Error('Vous devez renseigner la Description Action Prise avant de clôturer la réclamation');
+                    if Rec."Code Categorie" = '' then
+                        Error('Vous devez renseigner le Code Catégorie avant de clôturer la réclamation.');
+
+                    // Notification HORS SLA si applicable
+                    if Rec."Hors Delai" and (not Rec."Notification Envoyee") then begin
+                        NotifLog.Init();
+                        NotifLog."No. Reclamation" := Rec."No_";
+                        NotifLog."Date Heure" := CurrentDateTime();
+                        NotifLog."Type Notification" := NotifLog."Type Notification"::"Hors SLA";
+                        NotifLog.Message := CopyStr(StrSubstNo(
+                            'Clôture — Réclamation %1 était HORS SLA (%2 jours). Client : %3',
+                            Rec."No_", Rec."Delai En Cours", Rec."Nom Client"), 1, 500);
+                        NotifLog.Destinataire := Rec."Attribue A";
+                        NotifLog."No. Client" := Rec."No. Client";
+                        NotifLog.Processed := true;
+                        NotifLog.Insert(true);
+                        Rec."Notification Envoyee" := true;
+                    end;
+
+                    // Notification de clôture
+                    NotifLog.Init();
+                    NotifLog."No. Reclamation" := Rec."No_";
+                    NotifLog."Date Heure" := CurrentDateTime();
+                    NotifLog."Type Notification" := NotifLog."Type Notification"::Cloture;
+                    NotifLog.Message := CopyStr(StrSubstNo(
+                        'Réclamation %1 clôturée après %2 jours. Retour client : %3',
+                        Rec."No_", Rec."Delai En Cours", Format(Rec."Retour Client")), 1, 500);
+                    NotifLog.Destinataire := Rec."Attribue A";
+                    NotifLog."No. Client" := Rec."No. Client";
+                    NotifLog.Processed := true;
+                    NotifLog.Insert(true);
 
                     Rec.Statut := Rec.Statut::Cloturee;
                     Rec."Date Cloture" := Today();
                     Rec.Cloturee := true;
-
                     Rec.Modify(true);
-
                     CurrPage.Update(true);
-
                 end;
             }
 
@@ -319,15 +386,28 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Caption = 'Rouvrir';
                 Image = ReOpen;
-
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
-
                 Enabled = (Rec.Statut = Rec.Statut::Cloturee);
 
                 trigger OnAction()
+                var
+                    NotifLog: Record "Rec Notification Log";
                 begin
+                    // Notification
+                    NotifLog.Init();
+                    NotifLog."No. Reclamation" := Rec."No_";
+                    NotifLog."Date Heure" := CurrentDateTime();
+                    NotifLog."Type Notification" := NotifLog."Type Notification"::"Relance Client";
+                    NotifLog.Message := CopyStr(StrSubstNo(
+                        'Réclamation %1 réouverte par %2',
+                        Rec."No_", UserId()), 1, 500);
+                    NotifLog.Destinataire := Rec."Attribue A";
+                    NotifLog."No. Client" := Rec."No. Client";
+                    NotifLog.Processed := false;
+                    NotifLog.Insert(true);
+
                     Rec.Statut := Rec.Statut::Ouverte;
                     Rec."Date Cloture" := 0D;
                     Rec.Cloturee := false;
@@ -433,8 +513,7 @@ page 65000 "Reclamation Card PFE"
         else
             HorsDelaiTexte := ' Dans les délais';
 
-        if Rec."Hors Delai" and (not Rec.Cloturee) then
-            Rec.NotifierHorsSLA();
+
         if Rec."No. Client" <> '' then begin
             Rec2.Reset();
             Rec2.SetRange("No. Client", Rec."No. Client");

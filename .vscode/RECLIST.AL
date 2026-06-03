@@ -137,6 +137,16 @@ page 65001 "Reclamation List PFE"
                 ApplicationArea = All;
                 Caption = 'Indicateurs';
             }
+            part(WorkflowHistoryFB; "Rec Workflow History FB")
+            {
+                ApplicationArea = All;
+                Caption = 'Historique Workflow';
+            }
+            part(NotificationLogFB; "Rec Notification Log FB")
+            {
+                ApplicationArea = All;
+                Caption = 'Notifications';
+            }
         }
     }
 
@@ -192,6 +202,19 @@ page 65001 "Reclamation List PFE"
             HorsDelaiTexte := 'OK';
             HorsDelaiStyle := 'Favorable';
         end;
+
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        RecWorkflow: Record "Rec Workflow History";
+        RecNotif: Record "Rec Notification Log";
+    begin
+        RecWorkflow.SetRange("No. Reclamation", Rec."No_");
+        CurrPage.WorkflowHistoryFB.Page.SetTableView(RecWorkflow);
+
+        RecNotif.SetRange("No. Reclamation", Rec."No_");
+        CurrPage.NotificationLogFB.Page.SetTableView(RecNotif);
     end;
 
     var
