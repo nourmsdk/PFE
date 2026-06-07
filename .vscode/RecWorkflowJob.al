@@ -1,25 +1,5 @@
-// ============================================================
-//  CODEUNIT 65001 — Rec Workflow Job
-//
-//  C'est le DÉCLENCHEUR AUTOMATIQUE du système.
-//  Il est enregistré comme Job Queue Entry dans Business Central
-//  et tourne à intervalles réguliers (ex: toutes les 2 heures)
-//  SANS intervention humaine.
-//
-//  Ce qu'il fait à chaque exécution :
-//    1. Récupère toutes les réclamations actives (non clôturées)
-//    2. Met à jour le délai de chaque réclamation
-//    3. Appelle le moteur (Rec Workflow Engine) pour chacune
-//    4. Journalise le résultat dans Rec Job Log
-//
-//  CONFIGURATION dans Business Central :
-//    Administration → Planification des tâches → Entrées file d'attente
-//    → Nouveau → Codeunit → ID : 65001
-//    → Récurrence : toutes les 120 minutes (ou selon votre besoin)
-// ============================================================
 codeunit 65001 "Rec Workflow Job"
 {
-    // Propriété obligatoire pour être utilisé comme Job Queue
     Subtype = Normal;
 
     trigger OnRun()
@@ -27,15 +7,10 @@ codeunit 65001 "Rec Workflow Job"
         ExecuterTreatementAutomatique();
     end;
 
-    // ──────────────────────────────────────────────────────────
-    //  TRAITEMENT PRINCIPAL
-    //  Point d'entrée appelé par le Job Queue scheduler de BC.
-    // ──────────────────────────────────────────────────────────
     local procedure ExecuterTreatementAutomatique()
     var
         Rec: Record Reclamation;
         Engine: Codeunit "Rec Workflow Engine";
-        JobLog: Record "Rec Job Log";
         NbTraitees: Integer;
         NbErreurs: Integer;
         StartTime: DateTime;
@@ -45,32 +20,20 @@ codeunit 65001 "Rec Workflow Job"
         NbTraitees := 0;
         NbErreurs := 0;
 
-        // ── Boucle sur toutes les réclamations actives ─────────
         Rec.Reset();
-        Rec.SetRange(Cloturee, false); // exclure les clôturées
-        Rec.SetFilter(Statut, '<>%1', Rec.Statut::" "); // exclure les vides
+        Rec.SetRange(Cloturee, false);
+        Rec.SetFilter(Statut, '<>%1', Rec.Statut::" ");
 
         if not Rec.FindSet(true) then begin
-            // Aucune réclamation active — journaliser quand même
             InsererJobLog(StartTime, 0, 0, 'Aucune réclamation active à traiter.');
             exit;
         end;
 
         repeat
-            // Traiter chaque réclamation dans un bloc protégé
-            // pour qu'une erreur sur une réclamation n'arrête pas
-            // le traitement des suivantes.
-            if TryTraiterReclamation(Rec, Engine) then
-                NbTraitees += 1
-            else begin
-                NbErreurs += 1;
-                ErrorMsg := GetLastErrorText();
-                InsererErreurLog(Rec."No_", ErrorMsg);
-                ClearLastError();
-            end;
+            NbTraitees += 1;
+            TryTraiterReclamation(Rec, Engine);
         until Rec.Next() = 0;
 
-        // ── Journaliser le résultat global ────────────────────
         InsererJobLog(
             StartTime,
             NbTraitees,
@@ -78,28 +41,15 @@ codeunit 65001 "Rec Workflow Job"
             StrSubstNo('%1 réclamation(s) traitée(s), %2 erreur(s). Durée : %3 ms.',
                 NbTraitees,
                 NbErreurs,
-                // Durée en millisecondes
                 Format(CurrentDateTime() - StartTime)));
     end;
 
-    // ──────────────────────────────────────────────────────────
-    //  TRAITEMENT D'UNE SEULE RÉCLAMATION
-    //  [TryFunction] : si une erreur se produit, elle est
-    //  capturée et ne fait PAS planter tout le job.
-    // ──────────────────────────────────────────────────────────
-    [TryFunction]
     local procedure TryTraiterReclamation(var Rec: Record Reclamation; var Engine: Codeunit "Rec Workflow Engine")
     begin
-        // 1. Recalculer le délai (age de la réclamation)
         Rec.CalculerDelaiTraitement();
-
-        // 2. Appeler le moteur de règles
         Engine.EvaluerReclamation(Rec);
     end;
 
-    // ──────────────────────────────────────────────────────────
-    //  JOURNALISATION
-    // ──────────────────────────────────────────────────────────
     local procedure InsererJobLog(StartTime: DateTime; NbTraitees: Integer; NbErreurs: Integer; Msg: Text)
     var
         JobLog: Record "Rec Job Log";
@@ -130,12 +80,6 @@ codeunit 65001 "Rec Workflow Job"
     end;
 }
 
-// ============================================================
-//  TABLE 65010 — Rec Job Log
-//  Journal d'exécution du Job Queue.
-//  Permet au jury (et à l'admin) de voir que le système
-//  tourne automatiquement en arrière-plan.
-// ============================================================
 table 65010 "Rec Job Log"
 {
     Caption = 'Journal execution automatique';
@@ -188,9 +132,6 @@ table 65010 "Rec Job Log"
     }
 }
 
-// ============================================================
-//  PAGE 65010 — Journal d'exécution (pour l'admin et le jury)
-// ============================================================
 page 65010 "Rec Job Log List"
 {
     Caption = 'Journal execution automatique';
@@ -246,7 +187,6 @@ page 65010 "Rec Job Log List"
     {
         area(Processing)
         {
-            // Permet de lancer le job manuellement pour tester
             action(LancerManuellement)
             {
                 ApplicationArea = All;
@@ -288,6 +228,20 @@ page 65010 "Rec Job Log List"
 
 pageextension 65003 "Rec Card Workflow Ext" extends "Reclamation Card PFE"
 {
+    layout
+    {
+        addfirst(FactBoxes)
+        {
+            part(AttachmentFactBox; "Document Attachment Factbox")
+            {
+                ApplicationArea = All;
+                SubPageLink = "Table ID" = const(65000),
+              "No." = field("No_");
+                UpdatePropagation = Both;
+            }
+        }
+    }
+
     actions
     {
         addlast(Processing)
@@ -309,14 +263,12 @@ pageextension 65003 "Rec Card Workflow Ext" extends "Reclamation Card PFE"
                     CurrPage.Update(true);
                 end;
             }
+
+
         }
     }
 }
 
-// ============================================================
-//  EXTENSION ROLECENTER — Ajouter les nouvelles pages
-//  au menu de navigation existant
-// ============================================================
 pageextension 65004 "Rec RoleCenter Workflow Ext" extends "DLT Complaint RoleCenter"
 {
     actions
@@ -340,6 +292,13 @@ pageextension 65004 "Rec RoleCenter Workflow Ext" extends "DLT Complaint RoleCen
                     Caption = 'Journal execution';
                     RunObject = page "Rec Job Log List";
                     Image = History;
+                }
+                action(ReglesAppliquees)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Regles Appliquees';
+                    RunObject = page "Rec Workflow Rule Applied List";
+                    Image = Approvals;
                 }
             }
         }

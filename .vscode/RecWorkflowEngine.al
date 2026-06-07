@@ -29,7 +29,7 @@ codeunit 65000 "Rec Workflow Engine"
 
         repeat
             if Rule."Une Seule Fois" then begin
-                if not RuleDejaAppliquee(Rec."No_", Rule."Code") then begin
+                if not RuleDejaAppliquee(Rec."No_", Rule."Code") then
                     if ConditionsRemplies(Rec, Rule, DelaiPct) then begin
                         ExecuterActions(Rec, Rule);
                         AnyChange := true;
@@ -37,15 +37,13 @@ codeunit 65000 "Rec Workflow Engine"
                         Rule."Nb Executions" += 1;
                         Rule.Modify(false);
                     end;
-                end;
-            end else begin
+            end else
                 if ConditionsRemplies(Rec, Rule, DelaiPct) then begin
                     ExecuterActions(Rec, Rule);
                     AnyChange := true;
                     Rule."Nb Executions" += 1;
                     Rule.Modify(false);
                 end;
-            end;
         until Rule.Next() = 0;
 
         if AnyChange then begin
@@ -54,24 +52,28 @@ codeunit 65000 "Rec Workflow Engine"
         end;
     end;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Vérifie si toutes les conditions de la règle sont remplies
+    // ─────────────────────────────────────────────────────────────────────────
     local procedure ConditionsRemplies(
         Rec: Record Reclamation;
         Rule: Record "Rec Workflow Rule";
         DelaiPct: Integer): Boolean
     begin
-        if Rule."Condition Statut" <> 0 then
+        // Comparaisons via l'option " " (vide = pas de condition)
+        if Rule."Condition Statut" <> Rule."Condition Statut"::" " then
             if Rec.Statut <> Rule."Condition Statut" then
                 exit(false);
 
-        if Rule."Condition Etape" <> 0 then
+        if Rule."Condition Etape" <> Rule."Condition Etape"::" " then
             if Rec."Etape Workflow" <> Rule."Condition Etape" then
                 exit(false);
 
-        if Rule."Condition Gravite" <> 0 then
+        if Rule."Condition Gravite" <> Rule."Condition Gravite"::" " then
             if Rec.Gravite <> Rule."Condition Gravite" then
                 exit(false);
 
-        if Rule."Condition Priorite" <> 0 then
+        if Rule."Condition Priorite" <> Rule."Condition Priorite"::" " then
             if Rec.Priorite <> Rule."Condition Priorite" then
                 exit(false);
 
@@ -90,6 +92,9 @@ codeunit 65000 "Rec Workflow Engine"
         exit(true);
     end;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Exécute les actions définies dans la règle
+    // ─────────────────────────────────────────────────────────────────────────
     local procedure ExecuterActions(var Rec: Record Reclamation; Rule: Record "Rec Workflow Rule")
     var
         OldEtape: Option;
@@ -103,13 +108,15 @@ codeunit 65000 "Rec Workflow Engine"
         OldStatut := Rec.Statut;
         ChangementDetecte := false;
 
-        if Rule."Action Etape" <> 0 then
+        // ── Changement d'étape ──────────────────────────────────────────────
+        if Rule."Action Etape" <> Rule."Action Etape"::" " then
             if Rec."Etape Workflow" <> Rule."Action Etape" then begin
                 Rec."Etape Workflow" := Rule."Action Etape";
                 ChangementDetecte := true;
             end;
 
-        if Rule."Action Statut" <> 0 then
+        // ── Changement de statut ────────────────────────────────────────────
+        if Rule."Action Statut" <> Rule."Action Statut"::" " then
             if Rec.Statut <> Rule."Action Statut" then begin
                 Rec.Statut := Rule."Action Statut";
                 case Rec.Statut of
@@ -123,24 +130,28 @@ codeunit 65000 "Rec Workflow Engine"
                 ChangementDetecte := true;
             end;
 
-        if Rule."Action Priorite" <> 0 then
+        // ── Changement de priorité ──────────────────────────────────────────
+        if Rule."Action Priorite" <> Rule."Action Priorite"::" " then
             if Rec.Priorite <> Rule."Action Priorite" then begin
                 Rec.Priorite := Rule."Action Priorite";
                 ChangementDetecte := true;
             end;
 
+        // ── Attribution à un utilisateur ────────────────────────────────────
         if Rule."Action Attribuer A" <> '' then
             if Rec."Attribue A" <> Rule."Action Attribuer A" then begin
                 Rec."Attribue A" := Rule."Action Attribuer A";
                 ChangementDetecte := true;
             end;
 
+        // ── Forcer hors délai ───────────────────────────────────────────────
         if Rule."Action Forcer Hors Delai" then
             if not Rec."Hors Delai" then begin
                 Rec."Hors Delai" := true;
                 ChangementDetecte := true;
             end;
 
+        // ── Historique workflow ─────────────────────────────────────────────
         if ChangementDetecte then begin
             HistLine.Init();
             HistLine."No. Reclamation" := Rec."No_";
@@ -151,11 +162,12 @@ codeunit 65000 "Rec Workflow Engine"
             HistLine."Statut Suivant" := Rec.Statut;
             HistLine."User ID" := 'SYSTEM';
             HistLine.Commentaire := CopyStr(
-                StrSubstNo('Regle auto : %1 - %2', Rule."Code", Rule.Description), 1, 250);
+                StrSubstNo('Règle auto : %1 — %2', Rule."Code", Rule.Description), 1, 250);
             HistLine.Insert(true);
         end;
 
-        if Rule."Action Notification" <> 0 then begin
+        // ── Notification ────────────────────────────────────────────────────
+        if Rule."Action Notification" <> Rule."Action Notification"::" " then begin
             if Rule."Action Message" <> '' then
                 MsgNotif := CopyStr(StrSubstNo(
                     Rule."Action Message",
@@ -175,40 +187,52 @@ codeunit 65000 "Rec Workflow Engine"
             NotifLog."No. Client" := Rec."No. Client";
             NotifLog.Processed := false;
             NotifLog.Insert(true);
-            ChangementDetecte := true;
-            if Rule."Action Notification" = 1 then
+
+            if Rule."Action Notification" = Rule."Action Notification"::"Hors SLA" then
                 Rec."Notification Envoyee" := true;
         end;
     end;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Construit le message de notification par défaut selon le type
+    // ─────────────────────────────────────────────────────────────────────────
     local procedure BuildDefaultMessage(
         Rec: Record Reclamation;
-        TypeNotif: Integer): Text[500]
+        TypeNotif: Option): Text[500]
+    var
+        NotifLog: Record "Rec Notification Log";
     begin
         case TypeNotif of
-            1:
+            NotifLog."Type Notification"::"Hors SLA":
                 exit(CopyStr(StrSubstNo(
-                    'ALERTE : Reclamation %1 depasse le SLA (%2 jours). Client : %3. Agence : %4.',
+                    'ALERTE SLA : Réclamation %1 dépasse le SLA (%2 jours écoulés). Client : %3. Agence : %4.',
                     Rec."No_", Rec."Delai En Cours", Rec."Nom Client", Rec.Agence), 1, 500));
-            2:
+
+            NotifLog."Type Notification"::Alerte75pct:
                 exit(CopyStr(StrSubstNo(
-                    'Attention : Reclamation %1 a atteint 75pct du SLA (%2 jours ecoules). Client : %3.',
+                    'Attention : Réclamation %1 a atteint 75%% du SLA (%2 jours écoulés). Client : %3.',
                     Rec."No_", Rec."Delai En Cours", Rec."Nom Client"), 1, 500));
-            3:
+
+            NotifLog."Type Notification"::"Escalade Manager":
                 exit(CopyStr(StrSubstNo(
-                    'ESCALADE : Reclamation %1 (Gravite : %2) necessite intervention manager. Client : %3.',
+                    'ESCALADE : Réclamation %1 (Gravité : %2) nécessite intervention manager. Client : %3.',
                     Rec."No_", Format(Rec.Gravite), Rec."Nom Client"), 1, 500));
-            7:
+
+            NotifLog."Type Notification"::"Relance Client":
                 exit(CopyStr(StrSubstNo(
-                    'Relance client pour reclamation %1 en attente depuis %2 jours. Contact : %3.',
+                    'Relance client pour réclamation %1 en attente depuis %2 jours. Contact : %3.',
                     Rec."No_", Rec."Delai En Cours", Rec."No. Telephone"), 1, 500));
+
             else
                 exit(CopyStr(StrSubstNo(
-                    'Notification automatique - Reclamation %1 / Client : %2.',
+                    'Notification automatique — Réclamation %1 / Client : %2.',
                     Rec."No_", Rec."Nom Client"), 1, 500));
         end;
     end;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Vérifie si une règle a déjà été appliquée à cette réclamation
+    // ─────────────────────────────────────────────────────────────────────────
     local procedure RuleDejaAppliquee(NoRec: Code[20]; RuleCode: Code[20]): Boolean
     var
         Applied: Record "Rec Workflow Rule Applied";
@@ -216,47 +240,36 @@ codeunit 65000 "Rec Workflow Engine"
         exit(Applied.Get(NoRec, RuleCode));
     end;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Enregistre qu'une règle "Une seule fois" a été appliquée
+    // ─────────────────────────────────────────────────────────────────────────
     local procedure MarquerRuleAppliquee(NoRec: Code[20]; RuleCode: Code[20])
     var
         Applied: Record "Rec Workflow Rule Applied";
     begin
-        Message('MarquerRuleAppliquee appelée : %1 / %2', NoRec, RuleCode); // ← debug
-        if Applied.Get(NoRec, RuleCode) then begin
-            Message('Applied existe deja pour %1 / %2', NoRec, RuleCode); // ← debug
-            exit;
-        end;
+        if Applied.Get(NoRec, RuleCode) then exit;
+
         Applied.Init();
         Applied."No. Reclamation" := NoRec;
         Applied."Rule Code" := RuleCode;
         Applied."Date Heure" := CurrentDateTime();
-        if not Applied.Insert(true) then
-            Message('ERREUR Insert Applied : Rec=%1 Rule=%2', NoRec, RuleCode)
-        else
-            Message('Insert Applied REUSSI : %1 / %2', NoRec, RuleCode); // ← debug
+        Applied.Insert(true);
     end;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Évaluation manuelle depuis la fiche réclamation
+    // Retourne un résumé des actions effectuées
+    // ─────────────────────────────────────────────────────────────────────────
     procedure EvaluerManuellement(var Rec: Record Reclamation)
     var
         NotifLog: Record "Rec Notification Log";
         HistLine: Record "Rec Workflow History";
-        Applied: Record "Rec Workflow Rule Applied";
         NotifBefore: Integer;
         HistBefore: Integer;
     begin
-        // Debug — affiche ce qui est dans Applied pour cette réclamation
-        Applied.SetRange("No. Reclamation", Rec."No_");
-        if Applied.FindSet() then
-            repeat
-                Message('Applied existe : Rec=[%1] Rule=[%2]',
-                    Applied."No. Reclamation",
-                    Applied."Rule Code");
-            until Applied.Next() = 0
-        else
-            Message('Aucune Applied trouvee pour [%1]', Rec."No_");
-
-
         NotifLog.SetRange("No. Reclamation", Rec."No_");
         NotifBefore := NotifLog.Count();
+
         HistLine.SetRange("No. Reclamation", Rec."No_");
         HistBefore := HistLine.Count();
 
@@ -265,39 +278,44 @@ codeunit 65000 "Rec Workflow Engine"
 
         NotifLog.Reset();
         NotifLog.SetRange("No. Reclamation", Rec."No_");
+
         HistLine.Reset();
         HistLine.SetRange("No. Reclamation", Rec."No_");
 
-        Message('Evaluation terminee.\Nouvelles notifications : %1\Nouvelles transitions : %2',
+        Message(
+            'Évaluation terminée.\\Nouvelles notifications : %1\\Nouvelles transitions workflow : %2',
             NotifLog.Count() - NotifBefore,
             HistLine.Count() - HistBefore);
     end;
 }
 
+// =============================================================================
+// Table : Règles workflow appliquées (traçabilité des règles "Une seule fois")
+// =============================================================================
 table 65009 "Rec Workflow Rule Applied"
 {
-    Caption = 'Regles workflow appliquees';
+    Caption = 'Règles Workflow Appliquées';
     DataClassification = CustomerContent;
 
     fields
     {
         field(1; "No. Reclamation"; Code[20])
         {
-            Caption = 'No. Reclamation';
+            Caption = 'N° Réclamation';
             DataClassification = CustomerContent;
             TableRelation = Reclamation."No_";
             NotBlank = true;
         }
         field(2; "Rule Code"; Code[20])
         {
-            Caption = 'Code Regle';
+            Caption = 'Code Règle';
             DataClassification = CustomerContent;
             TableRelation = "Rec Workflow Rule"."Code";
             NotBlank = true;
         }
         field(3; "Date Heure"; DateTime)
         {
-            Caption = 'Date Heure execution';
+            Caption = 'Date / Heure Exécution';
             DataClassification = CustomerContent;
         }
     }
@@ -305,17 +323,23 @@ table 65009 "Rec Workflow Rule Applied"
     keys
     {
         key(PK; "No. Reclamation", "Rule Code") { Clustered = true; }
+        key(K2; "Rule Code") { }
     }
 }
 
+// =============================================================================
+// Page : Liste des règles appliquées (outil admin / debug)
+// =============================================================================
 page 65015 "Rec Workflow Rule Applied List"
 {
     PageType = List;
     SourceTable = "Rec Workflow Rule Applied";
-    Caption = 'Regles Workflow Appliquees';
+    Caption = 'Règles Workflow Appliquées';
     ApplicationArea = All;
-    UsageCategory = Lists;
-    Editable = true;
+    UsageCategory = Administration;
+    SourceTableView = sorting("No. Reclamation", "Rule Code");
+    Editable = false;
+    InsertAllowed = false;
 
     layout
     {
@@ -326,14 +350,17 @@ page 65015 "Rec Workflow Rule Applied List"
                 field("No. Reclamation"; Rec."No. Reclamation")
                 {
                     ApplicationArea = All;
+                    Caption = 'N° Réclamation';
                 }
                 field("Rule Code"; Rec."Rule Code")
                 {
                     ApplicationArea = All;
+                    Caption = 'Code Règle';
                 }
                 field("Date Heure"; Rec."Date Heure")
                 {
                     ApplicationArea = All;
+                    Caption = 'Date / Heure';
                 }
             }
         }
@@ -345,23 +372,31 @@ page 65015 "Rec Workflow Rule Applied List"
         {
             action(SupprimerLigne)
             {
-                Caption = 'Supprimer ligne';
+                Caption = 'Supprimer cette ligne';
+                ToolTip = 'Permet de réappliquer cette règle sur cette réclamation.';
                 Image = Delete;
                 ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+
                 trigger OnAction()
                 begin
-                    if Confirm('Supprimer cette ligne Applied ?') then
+                    if Confirm('Supprimer cette entrée ? La règle pourra être réappliquée à cette réclamation.', false) then
                         Rec.Delete(true);
                 end;
             }
             action(ResetTout)
             {
-                Caption = 'Reset toutes les lignes';
+                Caption = 'Réinitialiser tout';
+                ToolTip = 'Supprime toutes les entrées pour permettre de retester toutes les règles.';
                 Image = DeleteAllBreakpoints;
                 ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+
                 trigger OnAction()
                 begin
-                    if Confirm('Supprimer TOUTES les lignes Applied ? (permet de retester toutes les regles)') then
+                    if Confirm('Supprimer TOUTES les entrées ? Toutes les règles "Une seule fois" seront réapplicables.', false) then
                         Rec.DeleteAll(true);
                 end;
             }

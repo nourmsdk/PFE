@@ -381,11 +381,54 @@ table 65000 "Reclamation"
         {
             Caption = 'N° Ordre Réparation';
             DataClassification = CustomerContent;
+            TableRelation = "Service Header"."No." where(
+        "Document Type" = const(Order));
+
+            trigger OnValidate()
+            var
+                SvcHdr: Record "Service Header";
+                SvcItem: Record "Service Item Line";
+            begin
+                if "No. Ordre Reparation" = '' then exit;
+
+                if SvcHdr.Get(SvcHdr."Document Type"::Order, "No. Ordre Reparation") then begin
+                    // "Name" est le vrai nom du champ dans Service Header BC
+                    if "No. Client" = '' then begin
+                        "No. Client" := SvcHdr."Customer No.";
+                        "Nom Client" := SvcHdr.Name;   // ← "Name", pas "Customer Name"
+                    end;
+
+                    // Chercher le véhicule via les lignes de service (Service Item Lines)
+                    if "No. Serie Vehicule" = '' then begin
+                        SvcItem.Reset();
+                        SvcItem.SetRange("Document Type", SvcHdr."Document Type");
+                        SvcItem.SetRange("Document No.", SvcHdr."No.");
+                        if SvcItem.FindFirst() then
+                            "No. Serie Vehicule" := SvcItem."Serial No.";
+                        // ← "Serial No." sur Service Item Line, pas Vehicle Serial No.
+                    end;
+                end;
+            end;
         }
         field(31; "No. Facture"; Code[20])
         {
             Caption = 'N° Facture';
             DataClassification = CustomerContent;
+            TableRelation = "Sales Invoice Header"."No." where(
+        "Sell-to Customer No." = field("No. Client"));
+
+            trigger OnValidate()
+            var
+                SalesInv: Record "Sales Invoice Header";
+            begin
+                if "No. Facture" = '' then exit;
+
+                if SalesInv.Get("No. Facture") then
+                    if "No. Client" = '' then begin
+                        "No. Client" := SalesInv."Sell-to Customer No.";
+                        "Nom Client" := SalesInv."Sell-to Customer Name";
+                    end;
+            end;
         }
         field(32; "No. Series"; Code[20])
         {
@@ -427,6 +470,12 @@ table 65000 "Reclamation"
             OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
             OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
         }
+        field(39; "Modif Par Moteur"; Boolean)
+        {
+            Caption = 'Modification par moteur workflow';
+            DataClassification = CustomerContent;
+        }
+
     }
 
     keys
@@ -467,25 +516,27 @@ table 65000 "Reclamation"
         HistLine."Statut Suivant" := Statut::Ouverte;
         HistLine."User ID" := UserId();
         HistLine.Commentaire := 'Création de la réclamation';
-        HistLine.Insert(true);
+        HistLine.Insert(false);
     end;
 
     trigger OnModify()
     var
         HistLine: Record "Rec Workflow History";
     begin
-        // Tracer changement de statut OU d'étape workflow
-        if (Statut <> xRec.Statut) or ("Etape Workflow" <> xRec."Etape Workflow") then begin
-            HistLine.Init();
-            HistLine."No. Reclamation" := "No_";
-            HistLine."Date Heure" := CurrentDateTime();
-            HistLine."Etape Precedente" := xRec."Etape Workflow";
-            HistLine."Etape Suivante" := "Etape Workflow";
-            HistLine."Statut Precedent" := xRec.Statut;
-            HistLine."Statut Suivant" := Statut;
-            HistLine."User ID" := UserId();
-            HistLine.Insert(true);
-        end;
+        // Tracer UNIQUEMENT les modifications manuelles
+        if not "Modif Par Moteur" then
+            if (Statut <> xRec.Statut) or ("Etape Workflow" <> xRec."Etape Workflow") then begin
+                HistLine.Init();
+                HistLine."No. Reclamation" := "No_";
+                HistLine."Date Heure" := CurrentDateTime();
+                HistLine."Etape Precedente" := xRec."Etape Workflow";
+                HistLine."Etape Suivante" := "Etape Workflow";
+                HistLine."Statut Precedent" := xRec.Statut;
+                HistLine."Statut Suivant" := Statut;
+                HistLine."User ID" := UserId();
+                HistLine.Commentaire := 'Modification manuelle';
+                HistLine.Insert(false);
+            end;
 
         CalculerDelaiTraitement();
     end;

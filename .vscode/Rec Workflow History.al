@@ -19,17 +19,13 @@ table 65004 "Rec Workflow History"
         }
         field(3; "Etape Precedente"; Option)
         {
-            Caption = 'Étape Précédente';
-            DataClassification = CustomerContent;
-            OptionMembers = Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
-            OptionCaption = 'Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
+            OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
+            OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
         }
         field(4; "Etape Suivante"; Option)
         {
-            Caption = 'Étape Suivante';
-            DataClassification = CustomerContent;
-            OptionMembers = Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
-            OptionCaption = 'Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
+            OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
+            OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
         }
         field(5; "Statut Precedent"; Option)
         {

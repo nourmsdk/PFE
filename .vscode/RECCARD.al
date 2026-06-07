@@ -91,11 +91,7 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                     }
-                    field("No. Ordre Reparation"; Rec."No. Ordre Reparation")
-                    {
-                        ApplicationArea = All;
-                        Editable = EstModifiable;
-                    }
+
                     field("No. Facture"; Rec."No. Facture")
                     {
                         ApplicationArea = All;
@@ -238,6 +234,7 @@ page 65000 "Reclamation Card PFE"
                 Caption = 'Notifications';
                 SubPageLink = "No. Reclamation" = field("No_");
             }
+
         }
     }
 
@@ -449,6 +446,7 @@ page 65000 "Reclamation Card PFE"
                     end;
                 end;
             }
+
 
         }
 
