@@ -250,53 +250,56 @@ table 65000 "Reclamation"
             DataClassification = CustomerContent;
             Editable = false;
         }
-        field(14; Canal; Option)
+        field(14; Canal; Enum "Canal Reclamation")
         {
             Caption = 'Canal';
             DataClassification = CustomerContent;
-            OptionMembers = " ",SAV,Showroom,"Téléphone",Email,Web;
-            OptionCaption = ' ,SAV,Showroom,Téléphone,Email,Web';
-        }
-        field(15; "Type Reclamation"; Option)
-        {
-            Caption = 'Type Réclamation';
-            DataClassification = CustomerContent;
-            OptionMembers = " ",Technique,Commercial,Livraison,Garantie,"Pièce défectueuse";
-            OptionCaption = ' ,Technique,Commercial,Livraison,Garantie,Pièce défectueuse';
-        }
-        field(16; Gravite; Option)
-        {
-            Caption = 'Gravité';
-            DataClassification = CustomerContent;
-            OptionMembers = " ",Faible,Moyenne,Haute,Critique;
-            OptionCaption = ' ,Faible,Moyenne,Haute,Critique';
 
             trigger OnValidate()
             begin
+                "Canal Texte" := Format(Canal);
+            end;
+        }
+
+        field(15; "Type Reclamation"; Enum "Type Reclamation")
+        {
+            Caption = 'Type Réclamation';
+            DataClassification = CustomerContent;
+
+            trigger OnValidate()
+            begin
+                "Type Reclamation Texte" := Format("Type Reclamation");
+            end;
+        }
+
+        field(16; Gravite; Enum "Gravite Reclamation")
+        {
+            Caption = 'Gravité';
+            DataClassification = CustomerContent;
+            trigger OnValidate()
+            begin
+                "Gravite Texte" := Format(Gravite);
                 case Gravite of
-                    Gravite::Critique:
+                    Gravite::Critique, Gravite::Haute:
                         Priorite := Priorite::Haute;
-
-                    Gravite::Haute:
-                        Priorite := Priorite::Haute;
-
                     Gravite::Moyenne:
                         Priorite := Priorite::Moyenne;
-
                     Gravite::Faible:
                         Priorite := Priorite::Faible;
-
                     else
                         Priorite := Priorite::" ";
                 end;
             end;
         }
-        field(17; Responsabilite; Option)
+        field(17; Responsabilite; Enum "Responsabilite Reclamation")
         {
             Caption = 'Responsabilité';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Atelier,Vendeur,Constructeur,Fournisseur;
-            OptionCaption = ' ,Atelier,Vendeur,Constructeur,Fournisseur';
+
+            trigger OnValidate()
+            begin
+                "Responsabilite Texte" := Format(Responsabilite);
+            end;
         }
         field(18; "Attribue A"; Code[50])
         {
@@ -325,19 +328,23 @@ table 65000 "Reclamation"
             Caption = 'Date Création';
             DataClassification = CustomerContent;
         }
-        field(21; Priorite; Option)
+        field(21; Priorite; Enum "Priorite Reclamation")
         {
             Caption = 'Priorité';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Faible,Moyenne,Haute;
-            OptionCaption = ' ,Faible,Moyenne,Haute';
+            trigger OnValidate()
+            begin
+                "Priorite Texte" := Format(Priorite);
+            end;
         }
-        field(22; Statut; Option)
+        field(22; Statut; Enum "Statut Reclamation")
         {
             Caption = 'Statut';
             DataClassification = CustomerContent;
-            OptionMembers = " ","Ouverte","Prise en charge","En cours","Cloturee";
-            OptionCaption = ' ,Ouverte,Prise en charge,En cours,Clôturée';
+            trigger OnValidate()
+            begin
+                "Statut Texte" := Format(Statut);
+            end;
         }
         field(23; "Description Action Prise"; Text[250])
         {
@@ -370,12 +377,15 @@ table 65000 "Reclamation"
             Caption = 'Clôturée';
             DataClassification = CustomerContent;
         }
-        field(29; "Retour Client"; Option)
+        field(29; "Retour Client"; Enum "Retour Client Reclamation")
         {
             Caption = 'Retour Client';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Satisfait,Insatisfait,"Sans retour";
-            OptionCaption = ' ,Satisfait,Insatisfait,Sans retour';
+
+            trigger OnValidate()
+            begin
+                "Retour Client Texte" := Format("Retour Client");
+            end;
         }
         field(30; "No. Ordre Reparation"; Code[20])
         {
@@ -465,16 +475,73 @@ table 65000 "Reclamation"
             DataClassification = CustomerContent;
             Editable = false;
         }
-        field(38; "Etape Workflow"; Option)
+        field(38; "Etape Workflow"; Enum "Etape Workflow Reclamation")
         {
-            OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
-            OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
+            Caption = 'Etape Workflow';
+            DataClassification = CustomerContent;
+            trigger OnValidate()
+            begin
+                "Etape Workflow Texte" := Format("Etape Workflow");
+            end;
         }
         field(39; "Modif Par Moteur"; Boolean)
         {
             Caption = 'Modification par moteur workflow';
             DataClassification = CustomerContent;
         }
+        field(40; "Canal Texte"; Text[50])
+        {
+            Caption = 'Canal (Texte)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(41; "Type Reclamation Texte"; Text[50])
+        {
+            Caption = 'Type Réclamation (Texte)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+
+        field(42; "Responsabilite Texte"; Text[50])
+        {
+            Caption = 'Responsabilité (Texte)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+
+        field(43; "Statut Texte"; Text[50])
+        {
+            Caption = 'Statut (Texte)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(44; "Retour Client Texte"; Text[50])
+        {
+            Caption = 'Retour Client (Texte)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(45; "Gravite Texte"; Text[50])
+        {
+            Caption = 'Gravité (Texte)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(46; "Priorite Texte"; Text[50])
+        {
+            Caption = 'Priorité (Texte)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+
+        field(47; "Etape Workflow Texte"; Text[50])
+        {
+            Caption = 'Étape Workflow (Texte)';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+
+
 
     }
 
@@ -502,18 +569,18 @@ table 65000 "Reclamation"
             "Date Creation" := Today();
         if "Attribue A" = '' then
             "Attribue A" := UserId();
-        Statut := Statut::Ouverte;
-        Priorite := Priorite::Faible;
-        "Etape Workflow" := "Etape Workflow"::Ouverture;
+        Statut := "Statut Reclamation"::Ouverte;
+        Priorite := "Priorite Reclamation"::Faible;
+        "Etape Workflow" := "Etape Workflow Reclamation"::Ouverture;
 
         // Tracer la création
         HistLine.Init();
         HistLine."No. Reclamation" := "No_";
         HistLine."Date Heure" := CurrentDateTime();
-        HistLine."Etape Precedente" := "Etape Workflow"::Ouverture;
-        HistLine."Etape Suivante" := "Etape Workflow"::Ouverture;
-        HistLine."Statut Precedent" := Statut::" ";
-        HistLine."Statut Suivant" := Statut::Ouverte;
+        HistLine."Etape Precedente" := "Etape Workflow Reclamation"::Ouverture;
+        HistLine."Etape Suivante" := "Etape Workflow Reclamation"::Ouverture;
+        HistLine."Statut Precedent" := "Statut Reclamation"::" ";
+        HistLine."Statut Suivant" := "Statut Reclamation"::Ouverte;
         HistLine."User ID" := UserId();
         HistLine.Commentaire := 'Création de la réclamation';
         HistLine.Insert(false);

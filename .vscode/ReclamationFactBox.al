@@ -83,12 +83,12 @@ page 65002 "Reclamation FactBox"
 
         // Prise en charge
         RecReclamation.Reset();
-        RecReclamation.SetRange(Statut, RecReclamation.Statut::"Prise en charge");
+        RecReclamation.SetRange(Statut, RecReclamation.Statut::"PriseEnCharge");
         NbPriseEnCharge := RecReclamation.Count;
 
         // En cours
         RecReclamation.Reset();
-        RecReclamation.SetRange(Statut, RecReclamation.Statut::"En cours");
+        RecReclamation.SetRange(Statut, RecReclamation.Statut::"EnCours");
         NbEnCours := RecReclamation.Count;
 
         // Clôturées

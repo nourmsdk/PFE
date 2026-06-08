@@ -46,8 +46,8 @@ page 65006 "Rec Historique Client FB"
         case Rec.Statut of
             Rec.Statut::Ouverte:
                 StatutStyle := 'Unfavorable';
-            Rec.Statut::"Prise en charge",
-            Rec.Statut::"En cours":
+            Rec.Statut::"PriseEnCharge",
+            Rec.Statut::"EnCours":
                 StatutStyle := 'Ambiguous';
             Rec.Statut::Cloturee:
                 StatutStyle := 'Favorable';

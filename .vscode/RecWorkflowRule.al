@@ -28,38 +28,30 @@ table 65008 "Rec Workflow Rule"
             DataClassification = CustomerContent;
             InitValue = 10;
         }
-        field(10; "Condition Statut"; Option)
+        field(10; "Condition Statut"; Enum "Statut Reclamation")
         {
             Caption = 'Si Statut';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Ouverte,"Prise en charge","En cours",Cloturee;
-            OptionCaption = ' ,Ouverte,Prise en charge,En cours,Cloturee';
         }
-        field(11; "Condition Etape"; Option)
+        field(11; "Condition Etape"; Enum "Etape Workflow Reclamation")
         {
             Caption = 'Si Etape';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
-            OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Cloture';
         }
-        field(12; "Condition Gravite"; Option)
+        field(12; "Condition Gravite"; Enum "Gravite Reclamation")
         {
             Caption = 'Si Gravite';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Faible,Moyenne,Haute,Critique;
-            OptionCaption = ' ,Faible,Moyenne,Haute,Critique';
         }
         field(13; "Condition Delai Pct Min"; Integer)
         {
             Caption = 'Si delai SLA atteint pct min';
             DataClassification = CustomerContent;
         }
-        field(14; "Condition Priorite"; Option)
+        field(14; "Condition Priorite"; Enum "Priorite Reclamation")
         {
             Caption = 'Si Priorite';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Faible,Moyenne,Haute;
-            OptionCaption = ' ,Faible,Moyenne,Haute';
         }
         field(15; "Condition Agence"; Code[20])
         {
@@ -73,26 +65,20 @@ table 65008 "Rec Workflow Rule"
             DataClassification = CustomerContent;
             TableRelation = "Rec Categorie".Code;
         }
-        field(20; "Action Etape"; Option)
+        field(20; "Action Etape"; Enum "Etape Workflow Reclamation")
         {
             Caption = 'Alors Etape';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
-            OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Cloture';
         }
-        field(21; "Action Statut"; Option)
+        field(21; "Action Statut"; Enum "Statut Reclamation")
         {
             Caption = 'Alors Statut';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Ouverte,"Prise en charge","En cours",Cloturee;
-            OptionCaption = ' ,Ouverte,Prise en charge,En cours,Cloturee';
         }
-        field(22; "Action Priorite"; Option)
+        field(22; "Action Priorite"; Enum "Priorite Reclamation")
         {
             Caption = 'Alors Priorite';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Faible,Moyenne,Haute;
-            OptionCaption = ' ,Faible,Moyenne,Haute';
         }
         field(23; "Action Notification"; Option)
         {

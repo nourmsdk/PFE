@@ -17,29 +17,25 @@ table 65004 "Rec Workflow History"
             DataClassification = CustomerContent;
             TableRelation = Reclamation."No_";
         }
-        field(3; "Etape Precedente"; Option)
+        field(3; "Etape Precedente"; Enum "Etape Workflow Reclamation")
         {
-            OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
-            OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
+            Caption = 'Etape Précédente';
+            DataClassification = CustomerContent;
         }
-        field(4; "Etape Suivante"; Option)
+        field(4; "Etape Suivante"; Enum "Etape Workflow Reclamation")
         {
-            OptionMembers = " ",Ouverture,Qualification,Affectation,Investigation,"Action corrective",Validation,Cloture;
-            OptionCaption = ' ,Ouverture,Qualification,Affectation,Investigation,Action corrective,Validation,Clôture';
+            Caption = 'Etape Suivante';
+            DataClassification = CustomerContent;
         }
-        field(5; "Statut Precedent"; Option)
+        field(5; "Statut Precedent"; Enum "Statut Reclamation")
         {
             Caption = 'Statut Précédent';
             DataClassification = CustomerContent;
-            OptionMembers = " ","Ouverte","Prise en charge","En cours","Cloturee";
-            OptionCaption = ' ,Ouverte,Prise en charge,En cours,Clôturée';
         }
-        field(6; "Statut Suivant"; Option)
+        field(6; "Statut Suivant"; Enum "Statut Reclamation")
         {
             Caption = 'Statut Suivant';
             DataClassification = CustomerContent;
-            OptionMembers = " ","Ouverte","Prise en charge","En cours","Cloturee";
-            OptionCaption = ' ,Ouverte,Prise en charge,En cours,Clôturée';
         }
         field(7; "User ID"; Code[50])          // ← champ manquant ajouté
         {

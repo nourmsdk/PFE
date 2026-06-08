@@ -97,8 +97,8 @@ codeunit 65000 "Rec Workflow Engine"
     // ─────────────────────────────────────────────────────────────────────────
     local procedure ExecuterActions(var Rec: Record Reclamation; Rule: Record "Rec Workflow Rule")
     var
-        OldEtape: Option;
-        OldStatut: Option;
+        OldEtape: Enum "Etape Workflow Reclamation";
+        OldStatut: Enum "Statut Reclamation";
         HistLine: Record "Rec Workflow History";
         NotifLog: Record "Rec Notification Log";
         MsgNotif: Text[500];
@@ -120,10 +120,10 @@ codeunit 65000 "Rec Workflow Engine"
             if Rec.Statut <> Rule."Action Statut" then begin
                 Rec.Statut := Rule."Action Statut";
                 case Rec.Statut of
-                    Rec.Statut::"Prise en charge":
+                    Rec.Statut::"PriseEnCharge":
                         if Rec."Date Prise En Charge" = 0D then
                             Rec."Date Prise En Charge" := Today();
-                    Rec.Statut::"En cours":
+                    Rec.Statut::"EnCours":
                         if Rec."Date Mise En Cours" = 0D then
                             Rec."Date Mise En Cours" := Today();
                 end;

@@ -274,7 +274,7 @@ page 65000 "Reclamation Card PFE"
                     NotifLog.Processed := false;
                     NotifLog.Insert(true);
 
-                    Rec.Statut := Rec.Statut::"Prise en charge";
+                    Rec.Statut := "Statut Reclamation"::PriseEnCharge;
                     Rec."Date Prise En Charge" := Today();
                     if not Rec.Cloturee then Rec.CalculerDelaiTraitement();
                     Rec.Modify(true);
@@ -284,7 +284,7 @@ page 65000 "Reclamation Card PFE"
 
             action(MettreEnCoursPFE)
             {
-                Enabled = (Rec.Statut = Rec.Statut::"Prise en charge");
+                Enabled = (Rec.Statut = "Statut Reclamation"::PriseEnCharge);
                 ApplicationArea = All;
                 Caption = 'Mettre En Cours';
                 Image = Start;
@@ -296,7 +296,7 @@ page 65000 "Reclamation Card PFE"
                 var
                     NotifLog: Record "Rec Notification Log";
                 begin
-                    if Rec.Statut <> Rec.Statut::"Prise en charge" then
+                    if Rec.Statut <> "Statut Reclamation"::PriseEnCharge then
                         Error('La réclamation doit être "Prise en charge" avant de la mettre En Cours.');
 
                     // Notification
@@ -312,7 +312,7 @@ page 65000 "Reclamation Card PFE"
                     NotifLog.Processed := false;
                     NotifLog.Insert(true);
 
-                    Rec.Statut := Rec.Statut::"En cours";
+                    Rec.Statut := "Statut Reclamation"::EnCours;
                     Rec."Date Mise En Cours" := Today();
                     Rec.Modify(true);
                     CurrPage.Update(true);
@@ -463,8 +463,8 @@ page 65000 "Reclamation Card PFE"
             Rec.Statut::Ouverte:
                 StatutStyle := 'Unfavorable';
 
-            Rec.Statut::"Prise en charge",
-            Rec.Statut::"En cours":
+            "Statut Reclamation"::PriseEnCharge,
+"Statut Reclamation"::EnCours:
                 StatutStyle := 'Ambiguous';
 
             Rec.Statut::Cloturee:

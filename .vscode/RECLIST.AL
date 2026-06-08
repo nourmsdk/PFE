@@ -178,8 +178,8 @@ page 65001 "Reclamation List PFE"
                 StatutStyle := 'Standard';
             Rec.Statut::Ouverte:
                 StatutStyle := 'Unfavorable';
-            Rec.Statut::"Prise en charge",
-            Rec.Statut::"En cours":
+            Rec.Statut::"PriseEnCharge",
+            Rec.Statut::"EnCours":
                 StatutStyle := 'Ambiguous';
             Rec.Statut::Cloturee:
                 StatutStyle := 'Favorable';

@@ -53,7 +53,7 @@ page 65012 "Rec Workflow History FB"
             Rec."Etape Suivante"::Cloture:
                 EtapeStyle := 'Favorable';
             Rec."Etape Suivante"::Investigation,
-            Rec."Etape Suivante"::"Action corrective":
+            Rec."Etape Suivante"::ActionCorrective:
                 EtapeStyle := 'Ambiguous';
             Rec."Etape Suivante"::Qualification,
             Rec."Etape Suivante"::Ouverture:
@@ -65,8 +65,8 @@ page 65012 "Rec Workflow History FB"
         case Rec."Statut Suivant" of
             Rec."Statut Suivant"::Cloturee:
                 StatutStyle := 'Favorable';
-            Rec."Statut Suivant"::"En cours",
-            Rec."Statut Suivant"::"Prise en charge":
+            Rec."Statut Suivant"::EnCours,
+            Rec."Statut Suivant"::PriseEnCharge:
                 StatutStyle := 'Ambiguous';
             Rec."Statut Suivant"::Ouverte:
                 StatutStyle := 'Unfavorable';
