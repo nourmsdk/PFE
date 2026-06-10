@@ -228,19 +228,7 @@ page 65010 "Rec Job Log List"
 
 pageextension 65003 "Rec Card Workflow Ext" extends "Reclamation Card PFE"
 {
-    layout
-    {
-        addfirst(FactBoxes)
-        {
-            part(AttachmentFactBox; "Document Attachment Factbox")
-            {
-                ApplicationArea = All;
-                SubPageLink = "Table ID" = const(65000),
-              "No." = field("No_");
-                UpdatePropagation = Both;
-            }
-        }
-    }
+
 
     actions
     {

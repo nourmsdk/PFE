@@ -22,6 +22,17 @@ table 65001 "Rec Categorie"
             DataClassification = CustomerContent;
             InitValue = true;
         }
+        field(4; "SLA Jours"; Integer)
+        {
+            Caption = 'SLA Jours (spécifique)';
+            DataClassification = CustomerContent;
+            MinValue = 0;
+        }
+        field(5; "Gravite Defaut"; Enum "Gravite Reclamation")
+        {
+            Caption = 'Gravité par défaut';
+            DataClassification = CustomerContent;
+        }
     }
 
     keys

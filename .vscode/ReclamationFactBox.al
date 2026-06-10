@@ -12,12 +12,7 @@ page 65002 "Reclamation FactBox"
             {
                 Caption = 'Statistiques';
 
-                field(TotalReclamations; TotalReclamations)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Total Réclamations';
-                    Style = Strong;
-                }
+
                 field(NbOuvertes; NbOuvertes)
                 {
                     ApplicationArea = All;
@@ -72,9 +67,7 @@ page 65002 "Reclamation FactBox"
     var
         RecReclamation: Record Reclamation;
     begin
-        // Total
-        RecReclamation.Reset();
-        TotalReclamations := RecReclamation.Count;
+
 
         // Ouvertes
         RecReclamation.Reset();
@@ -139,7 +132,7 @@ page 65002 "Reclamation FactBox"
     end;
 
     var
-        TotalReclamations: Integer;
+
         NbOuvertes: Integer;
         NbPriseEnCharge: Integer;
         NbEnCours: Integer;

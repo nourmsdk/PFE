@@ -20,13 +20,24 @@ page 65003 "Rec Categorie List"
                 field(Description; Rec.Description)
                 {
                     ApplicationArea = All;
-                    Caption = 'Description';
+                    Caption = 'Description';  // ligne 20 déjà existante
                 }
-                field(Actif; Rec.Actif)
+                field("Actif"; Rec.Actif)
                 {
                     ApplicationArea = All;
                     Caption = 'Actif';
                 }
+                field("SLA Jours"; Rec."SLA Jours")
+                {
+                    ApplicationArea = All;
+                    Caption = 'SLA Jours';
+                }
+                field("Gravite Defaut"; Rec."Gravite Defaut")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Gravité par défaut';
+                }
+
             }
         }
     }

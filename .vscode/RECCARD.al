@@ -33,9 +33,7 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                         Editable = EstModifiable;
-
                     }
-
                     field("Nom Client"; Rec."Nom Client")
                     {
                         ApplicationArea = All;
@@ -101,6 +99,18 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                         Editable = false;
+                    }
+                    group(ActionsCorrectivesGroup)
+                    {
+                        Caption = 'Actions Correctives';
+
+                        part(ActionsCorrectivesPart; "Rec Action Corrective Subpage")
+                        {
+                            ApplicationArea = All;
+                            Caption = 'Actions Correctives';
+                            SubPageLink = "No Reclamation" = field("No_");
+                            UpdatePropagation = Both;  // ← clé : propage les changements vers la page parente
+                        }
                     }
                 }
 
@@ -195,6 +205,26 @@ page 65000 "Reclamation Card PFE"
                         ApplicationArea = All;
                         Editable = EstModifiable;
                     }
+                    field(NbActionsTotales; NbActionsTotales)
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Nb actions totales';
+                        Editable = false;
+                    }
+                    field(NbActionsTerminees; NbActionsTerminees)
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Nb actions terminées';
+                        Editable = false;
+                        StyleExpr = NbActionsStyle;
+                    }
+                    field(NbActionsEnRetard; NbActionsEnRetard)
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Nb actions en retard';
+                        Editable = false;
+                        StyleExpr = NbRetardStyle;
+                    }
 
                     field(Agence; Rec.Agence)
                     {
@@ -205,6 +235,7 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                     }
+
 
                 }
             }
@@ -334,6 +365,15 @@ page 65000 "Reclamation Card PFE"
                 var
                     NotifLog: Record "Rec Notification Log";
                 begin
+                    // Bloquer si actions correctives encore ouvertes
+                    ActionCorr.Reset();
+                    ActionCorr.SetRange("No Reclamation", Rec."No_");
+                    ActionCorr.SetFilter(Statut, '<>%1', "Statut Action Corrective"::Terminee);
+                    ActionCorr.SetFilter(Statut, '<>%1&<>%2',
+                        "Statut Action Corrective"::Terminee,
+                        "Statut Action Corrective"::Annulee);
+                    if not ActionCorr.IsEmpty() then
+                        Error('Impossible de clôturer : %1 action(s) corrective(s) encore ouverte(s).', ActionCorr.Count());
                     if Rec."No. Client" = '' then
                         Error('Vous devez associer un client avant de clôturer.');
                     if Rec."Description Action Prise" = '' then
@@ -519,6 +559,9 @@ page 65000 "Reclamation Card PFE"
         end else
             NbReclamationsClient := 0;
 
+
+
+
         // Couleur selon le nombre
         if NbReclamationsClient >= 5 then
             NbReclamStyle := 'Unfavorable'    // rouge — client récidiviste
@@ -529,12 +572,45 @@ page 65000 "Reclamation Card PFE"
 
 
         EstModifiable := (Rec.Statut <> Rec.Statut::Cloturee);
+        // Compteurs actions correctives
+        ActionCorr.Reset();
+        ActionCorr.SetRange("No Reclamation", Rec."No_");
+        NbActionsTotales := ActionCorr.Count();
+
+        ActionCorr.SetRange(Statut, "Statut Action Corrective"::Terminee);
+        NbActionsTerminees := ActionCorr.Count();
+
+        ActionCorr.Reset();
+        ActionCorr.SetRange("No Reclamation", Rec."No_");
+        ActionCorr.SetRange("Indicateur Retard", true);
+        NbActionsEnRetard := ActionCorr.Count();
+
+        // Styles
+        if NbActionsEnRetard > 0 then
+            NbRetardStyle := 'Unfavorable'
+        else
+            NbRetardStyle := 'Favorable';
+
+        if (NbActionsTotales > 0) and (NbActionsTerminees = NbActionsTotales) then
+            NbActionsStyle := 'Favorable'
+        else if NbActionsTerminees > 0 then
+            NbActionsStyle := 'Ambiguous'
+        else
+            NbActionsStyle := 'Standard';
+        CurrPage.ActionsCorrectivesPart.Page.SetNoReclamation(Rec."No_");
+        CurrPage.ReclamationFactBox.Page.Update(false);
     end;
 
     trigger OnNewRecord(BelowxRec: Boolean)
     begin
         CurrPage.Editable := true;
         EstModifiable := true;
+        CurrPage.ActionsCorrectivesPart.Page.SetNoReclamation(Rec."No_");
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        CurrPage.ReclamationFactBox.Page.Update(false);
     end;
 
 
@@ -550,4 +626,10 @@ page 65000 "Reclamation Card PFE"
         NbReclamationsClient: Integer;
         NbReclamStyle: Text;
         Rec2: Record Reclamation;
+        NbActionsTotales: Integer;
+        NbActionsTerminees: Integer;
+        NbActionsEnRetard: Integer;
+        NbActionsStyle: Text;
+        NbRetardStyle: Text;
+        ActionCorr: Record "Rec Action Corrective";
 }
