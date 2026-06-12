@@ -287,7 +287,178 @@ codeunit 65000 "Rec Workflow Engine"
             NotifLog.Count() - NotifBefore,
             HistLine.Count() - HistBefore);
     end;
+    // ─────────────────────────────────────────────────────────────────────────
+    // Valide qu'une transition d'étape workflow est légale
+    // Lève une erreur bloquante si la transition est interdite
+    // ─────────────────────────────────────────────────────────────────────────
+    procedure ValiderTransition(EtapeActuelle: Enum "Etape Workflow Reclamation"; NouvelleEtape: Enum "Etape Workflow Reclamation")
+    var
+        OK: Boolean;
+    begin
+        OK := false;
+
+        case EtapeActuelle of
+            "Etape Workflow Reclamation"::Ouverture:
+                OK := (NouvelleEtape = "Etape Workflow Reclamation"::Qualification);
+
+            "Etape Workflow Reclamation"::Qualification:
+                OK := (NouvelleEtape = "Etape Workflow Reclamation"::Affectation);
+
+            "Etape Workflow Reclamation"::Affectation:
+                OK := (NouvelleEtape = "Etape Workflow Reclamation"::Investigation);
+
+            "Etape Workflow Reclamation"::Investigation:
+                OK := (NouvelleEtape = "Etape Workflow Reclamation"::ActionCorrective);
+
+            "Etape Workflow Reclamation"::ActionCorrective:
+                OK := (NouvelleEtape = "Etape Workflow Reclamation"::Validation);
+
+            "Etape Workflow Reclamation"::Validation:
+                // Approbation → Clôture  OU  Rejet → Investigation (flèche rouge)
+                OK := (NouvelleEtape = "Etape Workflow Reclamation"::Cloture) or
+                      (NouvelleEtape = "Etape Workflow Reclamation"::Investigation);
+
+            "Etape Workflow Reclamation"::Cloture:
+                OK := false; // état terminal, aucune transition possible
+        end;
+
+        if not OK then
+            Error(
+                'Transition interdite : "%1" → "%2".\Transitions autorisées :\' +
+                '  Ouverture → Qualification\' +
+                '  Qualification → Affectation\' +
+                '  Affectation → Investigation\' +
+                '  Investigation → Action corrective\' +
+                '  Action corrective → Validation\' +
+                '  Validation → Clôture  (approbation)\' +
+                '  Validation → Investigation  (rejet)',
+                EtapeActuelle, NouvelleEtape);
+    end;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Point d'entrée unique pour toute transition manuelle depuis la card page
+    // Utilise "Modif Par Moteur" = true pour éviter le doublon d'historique
+    // que OnModify() créerait sinon
+    // ─────────────────────────────────────────────────────────────────────────
+    procedure PasserEtapeSuivante(var Rec: Record Reclamation; NouvelleEtape: Enum "Etape Workflow Reclamation"; Commentaire: Text[250])
+    var
+        HistLine: Record "Rec Workflow History";
+        OldEtape: Enum "Etape Workflow Reclamation";
+        OldStatut: Enum "Statut Reclamation";
+    begin
+        // ── Garde : bloque si transition illégale ────────────────────────────
+        ValiderTransition(Rec."Etape Workflow", NouvelleEtape);
+
+        OldEtape := Rec."Etape Workflow";
+        OldStatut := Rec.Statut;
+
+        // ── Flag pour neutraliser OnModify (évite doublon historique) ────────
+        Rec."Modif Par Moteur" := true;
+
+        // ── Changement d'étape ───────────────────────────────────────────────
+        Rec."Etape Workflow" := NouvelleEtape;
+
+        // ── Mise à jour automatique du Statut selon l'étape ──────────────────
+        case NouvelleEtape of
+            "Etape Workflow Reclamation"::Qualification,
+            "Etape Workflow Reclamation"::Affectation:
+                Rec.Statut := "Statut Reclamation"::PriseEnCharge;
+
+            "Etape Workflow Reclamation"::Investigation,
+            "Etape Workflow Reclamation"::ActionCorrective,
+            "Etape Workflow Reclamation"::Validation:
+                Rec.Statut := "Statut Reclamation"::EnCours;
+
+            "Etape Workflow Reclamation"::Cloture:
+                begin
+                    Rec.Statut := "Statut Reclamation"::Cloturee;
+                    Rec.Cloturee := true;
+                    if Rec."Date Cloture" = 0D then
+                        Rec."Date Cloture" := Today();
+                end;
+        end;
+
+        // ── Date prise en charge à la première sortie d'Ouverture ────────────
+        if (OldEtape = "Etape Workflow Reclamation"::Ouverture) then
+            if Rec."Date Prise En Charge" = 0D then
+                Rec."Date Prise En Charge" := Today();
+
+        // ── Historique workflow (on l'écrit nous-mêmes, OnModify ne le fera pas)
+        HistLine.Init();
+        HistLine."No. Reclamation" := Rec."No_";
+        HistLine."Date Heure" := CurrentDateTime();
+        HistLine."Etape Precedente" := OldEtape;
+        HistLine."Etape Suivante" := NouvelleEtape;
+        HistLine."Statut Precedent" := OldStatut;
+        HistLine."Statut Suivant" := Rec.Statut;
+        HistLine."User ID" := UserId();
+        HistLine.Commentaire := CopyStr(
+            StrSubstNo('Manuel : %1 → %2. %3', OldEtape, NouvelleEtape, Commentaire), 1, 250);
+        HistLine.Insert(false);
+
+        // ── Sauvegarde (OnModify voit Modif Par Moteur = true → skip historique)
+        Rec.Modify(true);
+
+        // ── Remettre le flag à false après sauvegarde ────────────────────────
+        Rec."Modif Par Moteur" := false;
+        Rec.Modify(false);
+    end;
+    // ─────────────────────────────────────────────────────────────────────────
+    // VerifierConditionsCloture — aligné avec diagramme de séquence
+    // Retourne true si clôture possible, false si warning accepté,
+    // lève Error() si bloquant strict
+    // ─────────────────────────────────────────────────────────────────────────
+    procedure VerifierConditionsCloture(var Rec: Record Reclamation): Boolean
+    var
+        ActionCorr: Record "Rec Action Corrective";
+        NbOuvertes: Integer;
+        NbPlanifiees: Integer;
+        NbEnCours: Integer;
+    begin
+        // ── Vérifications bloquantes strictes ────────────────────────────────
+        if Rec."No. Client" = '' then
+            Error('Impossible de clôturer : aucun client associé.');
+
+        if Rec."Code Categorie" = '' then
+            Error('Impossible de clôturer : Code Catégorie obligatoire.');
+
+        if Rec."Description Action Prise" = '' then
+            Error('Impossible de clôturer : Description Action Prise obligatoire.');
+
+        if Rec."Etape Workflow" <> "Etape Workflow Reclamation"::Validation then
+            Error('Impossible de clôturer : la réclamation doit être à l''étape Validation (étape actuelle : %1).',
+                Rec."Etape Workflow");
+
+        // ── Compter actions par statut ────────────────────────────────────────
+        ActionCorr.Reset();
+        ActionCorr.SetRange("No Reclamation", Rec."No_");
+
+        ActionCorr.SetRange(Statut, "Statut Action Corrective"::Planifiee);
+        NbPlanifiees := ActionCorr.Count();
+
+        ActionCorr.SetRange(Statut, "Statut Action Corrective"::EnCours);
+        NbEnCours := ActionCorr.Count();
+
+        NbOuvertes := NbPlanifiees + NbEnCours;
+
+        // ── Warning avec Confirm() si actions Planifiée ou EnCours ───────────
+        if NbOuvertes > 0 then begin
+            if not Confirm(
+                'ATTENTION : %1 action(s) corrective(s) encore active(s) :\' +
+                '  - Planifiées : %2\' +
+                '  - En cours   : %3\\' +
+                'Clôturer quand même ?',
+                false,
+                NbOuvertes, NbPlanifiees, NbEnCours)
+            then
+                exit(false); // utilisateur a annulé
+        end;
+
+        exit(true); // tout OK, clôture autorisée
+    end;
+
 }
+
 
 // =============================================================================
 // Table : Règles workflow appliquées (traçabilité des règles "Une seule fois")

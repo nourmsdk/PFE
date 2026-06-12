@@ -482,6 +482,46 @@ table 65000 "Reclamation"
             trigger OnValidate()
             begin
                 "Etape Workflow Texte" := Format("Etape Workflow");
+
+                // Garde transition : bloquer si modification manuelle illégale
+                // On ignore si c'est le moteur workflow qui modifie
+                if "Modif Par Moteur" then exit;
+
+                // Ignorer à la création (xRec."Etape Workflow" = " ")
+                if xRec."Etape Workflow" = xRec."Etape Workflow"::" " then exit;
+
+                // Vérifier la légalité
+                case xRec."Etape Workflow" of
+                    "Etape Workflow Reclamation"::Ouverture:
+                        if "Etape Workflow" <> "Etape Workflow Reclamation"::Qualification then
+                            Error('Transition interdite : Ouverture → %1.\Utilisez les boutons de workflow.', "Etape Workflow");
+
+                    "Etape Workflow Reclamation"::Qualification:
+                        if "Etape Workflow" <> "Etape Workflow Reclamation"::Affectation then
+                            Error('Transition interdite : Qualification → %1.\Utilisez les boutons de workflow.', "Etape Workflow");
+
+                    "Etape Workflow Reclamation"::Affectation:
+                        if "Etape Workflow" <> "Etape Workflow Reclamation"::Investigation then
+                            Error('Transition interdite : Affectation → %1.\Utilisez les boutons de workflow.', "Etape Workflow");
+
+                    "Etape Workflow Reclamation"::Investigation:
+                        if "Etape Workflow" <> "Etape Workflow Reclamation"::ActionCorrective then
+                            Error('Transition interdite : Investigation → %1.\Utilisez les boutons de workflow.', "Etape Workflow");
+
+                    "Etape Workflow Reclamation"::ActionCorrective:
+                        if "Etape Workflow" <> "Etape Workflow Reclamation"::Validation then
+                            Error('Transition interdite : Action corrective → %1.\Utilisez les boutons de workflow.', "Etape Workflow");
+
+                    "Etape Workflow Reclamation"::Validation:
+                        if not ("Etape Workflow" in [
+                            "Etape Workflow Reclamation"::Cloture,
+                            "Etape Workflow Reclamation"::Investigation])
+                        then
+                            Error('Transition interdite : Validation → %1.\Utilisez les boutons de workflow.', "Etape Workflow");
+
+                    "Etape Workflow Reclamation"::Cloture:
+                        Error('La réclamation est clôturée. Aucune transition possible.');
+                end;
             end;
         }
         field(39; "Modif Par Moteur"; Boolean)

@@ -80,7 +80,7 @@ codeunit 65001 "Rec Workflow Job"
     end;
 }
 
-table 65010 "Rec Job Log"
+table 65016 "Rec Job Log"
 {
     Caption = 'Journal execution automatique';
     DataClassification = CustomerContent;

@@ -157,7 +157,8 @@ page 65014 "Rec Action Corrective Subpage"
 
     trigger OnNewRecord(BelowxRec: Boolean)
     begin
-        Rec."No Reclamation" := NoReclamation;
+        if Rec."No Reclamation" = '' then
+            Rec."No Reclamation" := NoReclamation;
     end;
 
     trigger OnAfterGetRecord()

@@ -56,6 +56,14 @@ page 65006 "Rec Historique Client FB"
         end;
     end;
 
+    trigger OnAfterGetCurrRecord()
+    begin
+        if Rec.GetFilter("No. Client") = '' then
+            Rec.SetRange("No. Client", 'NO_CLIENT_VIDE')
+        else
+            Rec.SetRange("No. Client");
+    end;
+
     var
         StatutStyle: Text;
 }

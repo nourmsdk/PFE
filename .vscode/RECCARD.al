@@ -33,6 +33,10 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                         Editable = EstModifiable;
+                        trigger OnValidate()
+                        begin
+                            CurrPage.Update(true);
+                        end;
                     }
                     field("Nom Client"; Rec."Nom Client")
                     {
@@ -128,7 +132,7 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                         Caption = 'Étape Workflow';
-                        Editable = EstModifiable;
+                        Editable = false;
                     }
 
                     field(Priorite; Rec.Priorite)
@@ -365,23 +369,12 @@ page 65000 "Reclamation Card PFE"
                 var
                     NotifLog: Record "Rec Notification Log";
                 begin
-                    // Bloquer si actions correctives encore ouvertes
-                    ActionCorr.Reset();
-                    ActionCorr.SetRange("No Reclamation", Rec."No_");
-                    ActionCorr.SetFilter(Statut, '<>%1', "Statut Action Corrective"::Terminee);
-                    ActionCorr.SetFilter(Statut, '<>%1&<>%2',
-                        "Statut Action Corrective"::Terminee,
-                        "Statut Action Corrective"::Annulee);
-                    if not ActionCorr.IsEmpty() then
-                        Error('Impossible de clôturer : %1 action(s) corrective(s) encore ouverte(s).', ActionCorr.Count());
-                    if Rec."No. Client" = '' then
-                        Error('Vous devez associer un client avant de clôturer.');
-                    if Rec."Description Action Prise" = '' then
-                        Error('Vous devez renseigner la Description Action Prise avant de clôturer la réclamation');
-                    if Rec."Code Categorie" = '' then
-                        Error('Vous devez renseigner le Code Catégorie avant de clôturer la réclamation.');
+                    // ── VerifierConditionsCloture : bloquant + warning Confirm() ─────
+                    if not WorkflowEngine.VerifierConditionsCloture(Rec) then exit;
 
-                    // Notification HORS SLA si applicable
+                    if not Confirm('Clôturer définitivement cette réclamation ?', false) then exit;
+
+                    // ── Notification HORS SLA si applicable ──────────────────────────
                     if Rec."Hors Delai" and (not Rec."Notification Envoyee") then begin
                         NotifLog.Init();
                         NotifLog."No. Reclamation" := Rec."No_";
@@ -397,7 +390,7 @@ page 65000 "Reclamation Card PFE"
                         Rec."Notification Envoyee" := true;
                     end;
 
-                    // Notification de clôture
+                    // ── Notification de clôture ───────────────────────────────────────
                     NotifLog.Init();
                     NotifLog."No. Reclamation" := Rec."No_";
                     NotifLog."Date Heure" := CurrentDateTime();
@@ -487,9 +480,117 @@ page 65000 "Reclamation Card PFE"
                 end;
             }
 
+            action(PasserQualification)
+            {
+                Caption = '→ Qualifier';
+                Image = Approval;
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Ouverture);
+                trigger OnAction()
+                begin
+                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::Qualification, '');
+                    CurrPage.Update(false);
+                end;
+            }
+            action(PasserAffectation)
+            {
+                Caption = '→ Affecter';
+                Image = UserSetup;
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Qualification);
+                trigger OnAction()
+                begin
+                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::Affectation, '');
+                    CurrPage.Update(false);
+                end;
+            }
+            action(PasserInvestigation)
+            {
+                Caption = '→ Investigation';
+                Image = Find;
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Affectation);
+                trigger OnAction()
+                begin
+                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::Investigation, '');
+                    CurrPage.Update(false);
+                end;
+            }
+            action(PasserActionCorrective)
+            {
+                Caption = '→ Action corrective';
+                Image = Tools;
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Investigation);
+                trigger OnAction()
+                begin
+                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::ActionCorrective, '');
+                    CurrPage.Update(false);
+                end;
+            }
+            action(PasserValidation)
+            {
+                Caption = '→ Soumettre validation';
+                Image = ReleaseDoc;
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::ActionCorrective);
+                trigger OnAction()
+                begin
+                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::Validation, '');
+                    CurrPage.Update(false);
+                end;
+            }
+            action(RejeterVersInvestigation)
+            {
+                Caption = '↩ Rejeter → Investigation';
+                Image = ReOpen;
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Validation);
+                trigger OnAction()
+                begin
+                    if not Confirm('Rejeter et retourner en Investigation ?', false) then exit;
+                    WorkflowEngine.PasserEtapeSuivante(
+                        Rec,
+                        "Etape Workflow Reclamation"::Investigation,
+                        'Rejeté par ' + UserId());
+                    CurrPage.Update(false);
+                end;
+            }
+            action(PasserCloture)
+            {
+                Caption = '→ Clôturer (workflow)';
+                Image = Approve;
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Validation);
+                trigger OnAction()
+                begin
+                    // ── VerifierConditionsCloture : bloquant + warning Confirm() ─────
+                    if not WorkflowEngine.VerifierConditionsCloture(Rec) then exit;
 
+                    if not Confirm('Clôturer définitivement cette réclamation ?', false) then exit;
+
+                    WorkflowEngine.PasserEtapeSuivante(
+                        Rec,
+                        "Etape Workflow Reclamation"::Cloture,
+                        'Clôture par ' + UserId());
+                    CurrPage.Update(false);
+                end;
+            }
         }
-
     }
 
     trigger OnAfterGetRecord()
@@ -599,6 +700,7 @@ page 65000 "Reclamation Card PFE"
             NbActionsStyle := 'Standard';
         CurrPage.ActionsCorrectivesPart.Page.SetNoReclamation(Rec."No_");
         CurrPage.ReclamationFactBox.Page.Update(false);
+        CurrPage.HistoriqueClientFB.Page.Update(false);
     end;
 
     trigger OnNewRecord(BelowxRec: Boolean)
@@ -632,4 +734,5 @@ page 65000 "Reclamation Card PFE"
         NbActionsStyle: Text;
         NbRetardStyle: Text;
         ActionCorr: Record "Rec Action Corrective";
+        WorkflowEngine: Codeunit "Rec Workflow Engine";
 }
