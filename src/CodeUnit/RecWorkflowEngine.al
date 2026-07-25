@@ -190,7 +190,37 @@ codeunit 65000 "Rec Workflow Engine"
 
             if Rule."Action Notification" = Rule."Action Notification"::"Hors SLA" then
                 Rec."Notification Envoyee" := true;
+
+            // ── Notification "en copie" à tous les utilisateurs d'un rôle ────
+            if Rule."Action Notifier Role" <> Rule."Action Notifier Role"::" " then
+                NotifierRole(Rec, Rule."Action Notifier Role", MsgNotif, Rule."Action Notification");
         end;
+    end;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Insère une entrée de notification pour chaque utilisateur actif du rôle
+    // donné, sans modifier "Attribue A" (escalade en copie, pas de transfert)
+    // ─────────────────────────────────────────────────────────────────────────
+    local procedure NotifierRole(Rec: Record Reclamation; TargetRole: Enum "Rec Role"; MsgNotif: Text[500]; TypeNotif: Option)
+    var
+        RoleSetup: Record "Rec Role Setup";
+        NotifLog: Record "Rec Notification Log";
+    begin
+        RoleSetup.Reset();
+        RoleSetup.SetRange(Role, TargetRole);
+        RoleSetup.SetRange(Actif, true);
+        if RoleSetup.FindSet() then
+            repeat
+                NotifLog.Init();
+                NotifLog."No. Reclamation" := Rec."No_";
+                NotifLog."Date Heure" := CurrentDateTime();
+                NotifLog."Type Notification" := TypeNotif;
+                NotifLog.Message := MsgNotif;
+                NotifLog.Destinataire := RoleSetup."User ID";
+                NotifLog."No. Client" := Rec."No. Client";
+                NotifLog.Processed := false;
+                NotifLog.Insert(true);
+            until RoleSetup.Next() = 0;
     end;
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -463,114 +493,7 @@ codeunit 65000 "Rec Workflow Engine"
 // =============================================================================
 // Table : Règles workflow appliquées (traçabilité des règles "Une seule fois")
 // =============================================================================
-table 65009 "Rec Workflow Rule Applied"
-{
-    Caption = 'Règles Workflow Appliquées';
-    DataClassification = CustomerContent;
-
-    fields
-    {
-        field(1; "No. Reclamation"; Code[20])
-        {
-            Caption = 'N° Réclamation';
-            DataClassification = CustomerContent;
-            TableRelation = Reclamation."No_";
-            NotBlank = true;
-        }
-        field(2; "Rule Code"; Code[20])
-        {
-            Caption = 'Code Règle';
-            DataClassification = CustomerContent;
-            TableRelation = "Rec Workflow Rule"."Code";
-            NotBlank = true;
-        }
-        field(3; "Date Heure"; DateTime)
-        {
-            Caption = 'Date / Heure Exécution';
-            DataClassification = CustomerContent;
-        }
-    }
-
-    keys
-    {
-        key(PK; "No. Reclamation", "Rule Code") { Clustered = true; }
-        key(K2; "Rule Code") { }
-    }
-}
 
 // =============================================================================
 // Page : Liste des règles appliquées (outil admin / debug)
 // =============================================================================
-page 65015 "Rec Workflow Rule Applied List"
-{
-    PageType = List;
-    SourceTable = "Rec Workflow Rule Applied";
-    Caption = 'Règles Workflow Appliquées';
-    ApplicationArea = All;
-    UsageCategory = Administration;
-    SourceTableView = sorting("No. Reclamation", "Rule Code");
-    Editable = false;
-    InsertAllowed = false;
-
-    layout
-    {
-        area(Content)
-        {
-            repeater(Lines)
-            {
-                field("No. Reclamation"; Rec."No. Reclamation")
-                {
-                    ApplicationArea = All;
-                    Caption = 'N° Réclamation';
-                }
-                field("Rule Code"; Rec."Rule Code")
-                {
-                    ApplicationArea = All;
-                    Caption = 'Code Règle';
-                }
-                field("Date Heure"; Rec."Date Heure")
-                {
-                    ApplicationArea = All;
-                    Caption = 'Date / Heure';
-                }
-            }
-        }
-    }
-
-    actions
-    {
-        area(Processing)
-        {
-            action(SupprimerLigne)
-            {
-                Caption = 'Supprimer cette ligne';
-                ToolTip = 'Permet de réappliquer cette règle sur cette réclamation.';
-                Image = Delete;
-                ApplicationArea = All;
-                Promoted = true;
-                PromotedCategory = Process;
-
-                trigger OnAction()
-                begin
-                    if Confirm('Supprimer cette entrée ? La règle pourra être réappliquée à cette réclamation.', false) then
-                        Rec.Delete(true);
-                end;
-            }
-            action(ResetTout)
-            {
-                Caption = 'Réinitialiser tout';
-                ToolTip = 'Supprime toutes les entrées pour permettre de retester toutes les règles.';
-                Image = DeleteAllBreakpoints;
-                ApplicationArea = All;
-                Promoted = true;
-                PromotedCategory = Process;
-
-                trigger OnAction()
-                begin
-                    if Confirm('Supprimer TOUTES les entrées ? Toutes les règles "Une seule fois" seront réapplicables.', false) then
-                        Rec.DeleteAll(true);
-                end;
-            }
-        }
-    }
-}

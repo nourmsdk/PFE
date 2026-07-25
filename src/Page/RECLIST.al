@@ -132,11 +132,6 @@ page 65001 "Reclamation List PFE"
 
         area(FactBoxes)
         {
-            part(ReclamationFactBox; "Reclamation FactBox")
-            {
-                ApplicationArea = All;
-                Caption = 'Indicateurs';
-            }
             part(WorkflowHistoryFB; "Rec Workflow History FB")
             {
                 ApplicationArea = All;
@@ -179,7 +174,7 @@ page 65001 "Reclamation List PFE"
             Rec.Statut::Ouverte:
                 StatutStyle := 'Unfavorable';
             Rec.Statut::"PriseEnCharge",
-            Rec.Statut::"EnCours":
+               Rec.Statut::"EnCours":
                 StatutStyle := 'Ambiguous';
             Rec.Statut::Cloturee:
                 StatutStyle := 'Favorable';
@@ -198,11 +193,30 @@ page 65001 "Reclamation List PFE"
         if Rec."Hors Delai" then begin
             HorsDelaiTexte := 'HORS SLA';
             HorsDelaiStyle := 'Unfavorable';
+        end else if CalculerDelaiPct(Rec) >= 75 then begin
+            HorsDelaiTexte := 'SLA 75%+';
+            HorsDelaiStyle := 'Attention';
         end else begin
             HorsDelaiTexte := 'OK';
             HorsDelaiStyle := 'Favorable';
         end;
 
+    end;
+
+    local procedure CalculerDelaiPct(RecReclam: Record Reclamation): Integer
+    var
+        RecParam: Record "Rec Parametres";
+        SLAJours: Integer;
+    begin
+        SLAJours := 7;
+        if RecParam.Get('DEFAULT') then
+            if RecParam."SLA Jours" > 0 then
+                SLAJours := RecParam."SLA Jours";
+
+        if SLAJours > 0 then
+            exit(Round((RecReclam."Delai En Cours" / SLAJours) * 100, 1))
+        else
+            exit(0);
     end;
 
     trigger OnAfterGetCurrRecord()

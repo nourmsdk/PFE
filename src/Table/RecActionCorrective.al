@@ -34,10 +34,23 @@ table 65012 "Rec Action Corrective"
         field(6; "Date Realisee"; Date)
         {
             Caption = 'Date réalisée';
+
+            trigger OnValidate()
+            begin
+                // Si date réalisée remplie → passer automatiquement à Terminée
+                if "Date Realisee" <> 0D then
+                    Statut := "Statut Action Corrective"::Terminee;
+                CalculerDelaiEtRetard();
+            end;
         }
         field(7; "Statut"; Enum "Statut Action Corrective")
         {
             Caption = 'Statut';
+
+            trigger OnValidate()
+            begin
+                CalculerDelaiEtRetard();
+            end;
         }
         field(8; "Commentaire"; Text[500])
         {
@@ -57,6 +70,11 @@ table 65012 "Rec Action Corrective"
         {
             Caption = 'Jours restants';
             Editable = false;
+            DataClassification = CustomerContent;
+        }
+        field(12; "Genere Automatiquement"; Boolean)
+        {
+            Caption = 'Généré Automatiquement';
             DataClassification = CustomerContent;
         }
     }
@@ -80,31 +98,34 @@ table 65012 "Rec Action Corrective"
 
     procedure CalculerDelaiEtRetard()
     begin
-        // Calcul délai réalisation
+        // Calcul délai réalisation (écart entre date prévue et date réalisée)
         if ("Date Realisee" <> 0D) and ("Date Prevue" <> 0D) then
             "Delai Realisation" := "Date Realisee" - "Date Prevue"
         else
             "Delai Realisation" := 0;
 
-        // Indicateur retard
+        // Indicateur retard + Jours restants selon statut
         case Statut of
             "Statut Action Corrective"::Terminee:
-                "Indicateur Retard" := "Delai Realisation" > 0;
+                begin
+                    "Indicateur Retard" := "Delai Realisation" > 0;
+                    "Jours Restants" := 0;
+                end;
             "Statut Action Corrective"::Annulee:
-                "Indicateur Retard" := false;
+                begin
+                    "Indicateur Retard" := false;
+                    "Jours Restants" := 0;
+                end;
             else
-                // Planifiée ou En cours
-                "Indicateur Retard" := ("Date Prevue" <> 0D) and (Today() > "Date Prevue");
+                // Statut vide, Planifiée ou En cours
+                if "Date Prevue" <> 0D then begin
+                    "Indicateur Retard" := Today() > "Date Prevue";
+                    "Jours Restants" := "Date Prevue" - Today();
+                end else begin
+                    "Indicateur Retard" := false;
+                    "Jours Restants" := 0;
+                end;
         end;
-        // Jours restants
-        if Statut = "Statut Action Corrective"::Terminee then
-            "Jours Restants" := 0
-        else if Statut = "Statut Action Corrective"::Annulee then
-            "Jours Restants" := 0
-        else if "Date Prevue" <> 0D then
-            "Jours Restants" := "Date Prevue" - Today()
-        else
-            "Jours Restants" := 0;
     end;
 
     procedure RecalculerToutesLesLignes(NoRec: Code[20])

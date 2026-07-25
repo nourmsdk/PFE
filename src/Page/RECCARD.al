@@ -104,18 +104,6 @@ page 65000 "Reclamation Card PFE"
                         ApplicationArea = All;
                         Editable = false;
                     }
-                    group(ActionsCorrectivesGroup)
-                    {
-                        Caption = 'Actions Correctives';
-
-                        part(ActionsCorrectivesPart; "Rec Action Corrective Subpage")
-                        {
-                            ApplicationArea = All;
-                            Caption = 'Actions Correctives';
-                            SubPageLink = "No Reclamation" = field("No_");
-                            UpdatePropagation = Both;  // ← clé : propage les changements vers la page parente
-                        }
-                    }
                 }
 
                 group(ColonneDroite)
@@ -139,7 +127,7 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                         StyleExpr = PrioriteStyle;
-                        Editable = EstModifiable;
+                        Editable = EstModifiable and PeutSAV;
                     }
 
                     field("Description Action Prise"; Rec."Description Action Prise")
@@ -161,7 +149,8 @@ page 65000 "Reclamation Card PFE"
                     field("Retour Client"; Rec."Retour Client")
                     {
                         ApplicationArea = All;
-                        Editable = EstModifiable;
+                        Editable = (Rec.Cloturee) or
+               (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Validation);
                     }
                     field("Date Mise En Cours"; Rec."Date Mise En Cours")
                     {
@@ -194,7 +183,7 @@ page 65000 "Reclamation Card PFE"
                     field(Gravite; Rec.Gravite)
                     {
                         ApplicationArea = All;
-                        Editable = EstModifiable;
+                        Editable = EstModifiable and PeutSAV;
                         StyleExpr = GraviteStyle;
                     }
 
@@ -239,18 +228,24 @@ page 65000 "Reclamation Card PFE"
                     {
                         ApplicationArea = All;
                     }
+                }
+            }
 
+            group(ActionsCorrectivesGroup)
+            {
+                Caption = 'Actions Correctives';
 
+                part(ActionsCorrectivesPart; "Rec Action Corrective Subpage")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Actions Correctives';
+                    SubPageLink = "No Reclamation" = field("No_");
+                    UpdatePropagation = Both;
                 }
             }
         }
         area(FactBoxes)
         {
-            part(ReclamationFactBox; "Reclamation FactBox")
-            {
-                ApplicationArea = All;
-                Caption = 'Indicateurs';
-            }
             part(HistoriqueClientFB; "Rec Historique Client FB")
             {
                 ApplicationArea = All;
@@ -279,7 +274,7 @@ page 65000 "Reclamation Card PFE"
         {
             action(PrendreEnChargePFE)
             {
-                Enabled = (Rec.Statut = Rec.Statut::Ouverte);
+                Enabled = (Rec.Statut = Rec.Statut::Ouverte) and PeutSAV;
                 ApplicationArea = All;
                 Caption = 'Prendre en Charge';
                 Image = Approve;
@@ -291,6 +286,7 @@ page 65000 "Reclamation Card PFE"
                 var
                     NotifLog: Record "Rec Notification Log";
                 begin
+                    RoleMgt.EnsureSAV('Prendre en Charge');
                     if Rec.Description = '' then
                         Error('Vous devez renseigner la Description de la réclamation.');
                     if Rec."Description Action Prise" = '' then
@@ -319,7 +315,7 @@ page 65000 "Reclamation Card PFE"
 
             action(MettreEnCoursPFE)
             {
-                Enabled = (Rec.Statut = "Statut Reclamation"::PriseEnCharge);
+                Enabled = (Rec.Statut = "Statut Reclamation"::PriseEnCharge) and PeutSAV;
                 ApplicationArea = All;
                 Caption = 'Mettre En Cours';
                 Image = Start;
@@ -331,6 +327,7 @@ page 65000 "Reclamation Card PFE"
                 var
                     NotifLog: Record "Rec Notification Log";
                 begin
+                    RoleMgt.EnsureSAV('Mettre En Cours');
                     if Rec.Statut <> "Statut Reclamation"::PriseEnCharge then
                         Error('La réclamation doit être "Prise en charge" avant de la mettre En Cours.');
 
@@ -363,12 +360,13 @@ page 65000 "Reclamation Card PFE"
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
-                Enabled = (Rec.Statut <> Rec.Statut::Cloturee) and (Rec."Code Categorie" <> '');
+                Enabled = (Rec.Statut <> Rec.Statut::Cloturee) and (Rec."Code Categorie" <> '') and PeutQualite;
 
                 trigger OnAction()
                 var
                     NotifLog: Record "Rec Notification Log";
                 begin
+                    RoleMgt.EnsureQualite('Clôturer');
                     // ── VerifierConditionsCloture : bloquant + warning Confirm() ─────
                     if not WorkflowEngine.VerifierConditionsCloture(Rec) then exit;
 
@@ -419,12 +417,13 @@ page 65000 "Reclamation Card PFE"
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
-                Enabled = (Rec.Statut = Rec.Statut::Cloturee);
+                Enabled = (Rec.Statut = Rec.Statut::Cloturee) and PeutQualite;
 
                 trigger OnAction()
                 var
                     NotifLog: Record "Rec Notification Log";
                 begin
+                    RoleMgt.EnsureQualite('Rouvrir');
                     // Notification
                     NotifLog.Init();
                     NotifLog."No. Reclamation" := Rec."No_";
@@ -482,18 +481,40 @@ page 65000 "Reclamation Card PFE"
 
             action(PasserQualification)
             {
-                Caption = '→ Qualifier';
+                Caption = 'Envoyer pour qualification';
                 Image = Approval;
                 ApplicationArea = All;
                 Promoted = true;
                 PromotedCategory = Process;
-                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Ouverture);
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Ouverture) and PeutOuvrir;
+
                 trigger OnAction()
                 begin
-                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::Qualification, '');
+                    RoleMgt.EnsureReceptionnaireOuSAV('Envoyer pour qualification');
+                    // ── Gardes Ouverture → Qualification ──────────────────
+                    if Rec."No. Client" = '' then
+                        Error('Ouverture : veuillez renseigner le client.');
+                    if Rec."No. Serie Vehicule" = '' then
+                        Error('Ouverture : veuillez renseigner le véhicule.');
+                    if Rec.Description = '' then
+                        Error('Ouverture : veuillez renseigner la description.');
+                    if Rec.Canal = Rec.Canal::" " then
+                        Error('Ouverture : veuillez renseigner le canal.');
+                    if Rec."Code Categorie" = '' then
+                        Error('Ouverture : veuillez renseigner la catégorie.');
+                    if Rec."Code Sous Categorie" = '' then
+                        Error('Ouverture : veuillez renseigner la sous-catégorie.');
+                    if Rec.Agence = '' then
+                        Error('Ouverture : veuillez renseigner l''agence.');
+
+                    WorkflowEngine.PasserEtapeSuivante(
+                        Rec,
+                        "Etape Workflow Reclamation"::Qualification,
+                        '');
                     CurrPage.Update(false);
                 end;
             }
+
             action(PasserAffectation)
             {
                 Caption = '→ Affecter';
@@ -501,13 +522,29 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Promoted = true;
                 PromotedCategory = Process;
-                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Qualification);
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Qualification) and PeutSAV;
                 trigger OnAction()
                 begin
-                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::Affectation, '');
+                    RoleMgt.EnsureSAV('Affecter');
+                    // ── Gardes Qualification → Affectation ────────────────
+                    if Rec.Gravite = Rec.Gravite::" " then
+                        Error('Qualification : veuillez renseigner la gravité.');
+                    if Rec."Type Reclamation" = Rec."Type Reclamation"::" " then
+                        Error('Qualification : veuillez renseigner le type de réclamation.');
+                    if Rec.Responsabilite = Rec.Responsabilite::" " then
+                        Error('Qualification : veuillez renseigner la responsabilité.');
+
+                    // ── Évaluation auto des règles (ex. ESCALADE si Gravité Critique) ─
+                    WorkflowEngine.EvaluerReclamation(Rec);
+
+                    WorkflowEngine.PasserEtapeSuivante(
+                        Rec,
+                        "Etape Workflow Reclamation"::Affectation,
+                        '');
                     CurrPage.Update(false);
                 end;
             }
+
             action(PasserInvestigation)
             {
                 Caption = '→ Investigation';
@@ -515,13 +552,31 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Promoted = true;
                 PromotedCategory = Process;
-                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Affectation);
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Affectation) and PeutSAV;
+
                 trigger OnAction()
+                var
+                    ActionCorr: Record "Rec Action Corrective";
                 begin
-                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::Investigation, '');
+                    RoleMgt.EnsureSAV('Passer en Investigation');
+                    // ── Gardes Affectation → Investigation ────────────────
+                    if Rec."Attribue A" = '' then
+                        Error('Affectation : veuillez attribuer la réclamation à un agent avant de lancer l''investigation.');
+
+                    // Vérifier qu'au moins une action corrective existe
+                    ActionCorr.Reset();
+                    ActionCorr.SetRange("No Reclamation", Rec."No_");
+                    if ActionCorr.IsEmpty() then
+                        Error('Affectation : aucune action corrective définie. Vérifiez la catégorie/sous-catégorie.');
+
+                    WorkflowEngine.PasserEtapeSuivante(
+                         Rec,
+                         "Etape Workflow Reclamation"::Investigation,
+                         '');
                     CurrPage.Update(false);
                 end;
             }
+
             action(PasserActionCorrective)
             {
                 Caption = '→ Action corrective';
@@ -529,10 +584,21 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Promoted = true;
                 PromotedCategory = Process;
-                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Investigation);
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Investigation) and PeutSAV;
+
                 trigger OnAction()
                 begin
-                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::ActionCorrective, '');
+                    RoleMgt.EnsureSAV('Passer en Action corrective');
+                    // ── Gardes Investigation → Action corrective ───────────
+                    if Rec."Description Action Prise" = '' then
+                        Error('Investigation : veuillez renseigner la description de l''action prise.');
+                    if Rec.Statut = "Statut Reclamation"::Ouverte then
+                        Error('Investigation : la réclamation doit être au minimum "Prise en charge".');
+
+                    WorkflowEngine.PasserEtapeSuivante(
+                        Rec,
+                        "Etape Workflow Reclamation"::ActionCorrective,
+                        '');
                     CurrPage.Update(false);
                 end;
             }
@@ -543,13 +609,50 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Promoted = true;
                 PromotedCategory = Process;
-                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::ActionCorrective);
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::ActionCorrective) and PeutSAV;
+
                 trigger OnAction()
+                var
+                    ActionCorr: Record "Rec Action Corrective";
+                    NbTotal: Integer;
+                    NbTerminees: Integer;
                 begin
-                    WorkflowEngine.PasserEtapeSuivante(Rec, "Etape Workflow Reclamation"::Validation, '');
+                    RoleMgt.EnsureSAV('Soumettre validation');
+                    // ── Gardes Action corrective → Validation ─────────────
+                    // Vérifier qu'il n'y a pas d'actions en retard non traitées
+                    ActionCorr.Reset();
+                    ActionCorr.SetRange("No Reclamation", Rec."No_");
+                    ActionCorr.SetRange("Indicateur Retard", true);
+                    ActionCorr.SetFilter(Statut, '<>%1&<>%2',
+                        "Statut Action Corrective"::Terminee,
+                        "Statut Action Corrective"::Annulee);
+                    if not ActionCorr.IsEmpty() then
+                        if not Confirm(
+                            'Attention : %1 action(s) corrective(s) en retard non clôturée(s).\Voulez-vous quand même soumettre à validation ?',
+                            false,
+                            ActionCorr.Count())
+                        then
+                            exit;
+
+                    // Vérifier qu'au moins une action est terminée
+                    ActionCorr.Reset();
+                    ActionCorr.SetRange("No Reclamation", Rec."No_");
+                    NbTotal := ActionCorr.Count();
+
+                    ActionCorr.SetRange(Statut, "Statut Action Corrective"::Terminee);
+                    NbTerminees := ActionCorr.Count();
+
+                    if NbTerminees = 0 then
+                        Error('Action corrective : au moins une action corrective doit être terminée avant de soumettre à validation.');
+
+                    WorkflowEngine.PasserEtapeSuivante(
+                         Rec,
+                         "Etape Workflow Reclamation"::Validation,
+                         '');
                     CurrPage.Update(false);
                 end;
             }
+
             action(RejeterVersInvestigation)
             {
                 Caption = '↩ Rejeter → Investigation';
@@ -557,17 +660,29 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Promoted = true;
                 PromotedCategory = Process;
-                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Validation);
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Validation) and PeutQualite;
+
                 trigger OnAction()
+                var
+                    MotifDialog: Page "Rec Motif Rejet Dialog";
+                    Motif: Text[250];
                 begin
-                    if not Confirm('Rejeter et retourner en Investigation ?', false) then exit;
+                    RoleMgt.EnsureQualite('Rejeter vers Investigation');
+
+                    // ── Garde Validation → Rejet : commentaire obligatoire ─
+                    if MotifDialog.RunModal() <> Action::OK then exit;
+                    Motif := MotifDialog.GetMotif();
+                    if Motif = '' then
+                        Error('Le motif du rejet est obligatoire.');
+
                     WorkflowEngine.PasserEtapeSuivante(
-                        Rec,
-                        "Etape Workflow Reclamation"::Investigation,
-                        'Rejeté par ' + UserId());
+                         Rec,
+                         "Etape Workflow Reclamation"::Investigation,
+                         'Rejeté par ' + UserId() + ' : ' + Motif);
                     CurrPage.Update(false);
                 end;
             }
+
             action(PasserCloture)
             {
                 Caption = '→ Clôturer (workflow)';
@@ -575,23 +690,58 @@ page 65000 "Reclamation Card PFE"
                 ApplicationArea = All;
                 Promoted = true;
                 PromotedCategory = Process;
-                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Validation);
+                Enabled = (Rec."Etape Workflow" = "Etape Workflow Reclamation"::Validation) and PeutQualite;
+
                 trigger OnAction()
+                var
+                    ActionCorr: Record "Rec Action Corrective";
+                    NbOuvertes: Integer;
                 begin
-                    // ── VerifierConditionsCloture : bloquant + warning Confirm() ─────
+                    RoleMgt.EnsureQualite('Clôturer (workflow)');
+                    // ── Gardes Validation → Clôture ───────────────────────
+                    // 1. Vérifier conditions de clôture (méthode centralisée)
                     if not WorkflowEngine.VerifierConditionsCloture(Rec) then exit;
 
-                    if not Confirm('Clôturer définitivement cette réclamation ?', false) then exit;
+                    // 2. Vérifier actions correctives non terminées
+                    ActionCorr.Reset();
+                    ActionCorr.SetRange("No Reclamation", Rec."No_");
+                    ActionCorr.SetFilter(Statut, '<>%1&<>%2',
+                        "Statut Action Corrective"::Terminee,
+                        "Statut Action Corrective"::Annulee);
+                    NbOuvertes := ActionCorr.Count();
+                    if NbOuvertes > 0 then
+                        if not Confirm(
+                            '%1 action(s) corrective(s) non terminée(s).\Clôturer quand même ?',
+                            false,
+                            NbOuvertes)
+                        then
+                            exit;
+
+                    // 3. Retour client obligatoire à la clôture
+                    if Rec."Retour Client" = Rec."Retour Client"::" " then
+                        Error('Clôture : veuillez renseigner le retour client avant de clôturer.');
+
+                    // 4. Confirmation finale
+                    if not Confirm('Clôturer définitivement cette réclamation ?', false) then
+                        exit;
 
                     WorkflowEngine.PasserEtapeSuivante(
                         Rec,
                         "Etape Workflow Reclamation"::Cloture,
-                        'Clôture par ' + UserId());
+                        'Clôture validée par ' + UserId());
                     CurrPage.Update(false);
                 end;
             }
+
         }
     }
+
+    trigger OnOpenPage()
+    begin
+        PeutOuvrir := RoleMgt.IsReceptionnaireOuSAV();
+        PeutSAV := RoleMgt.IsSAV();
+        PeutQualite := RoleMgt.IsQualite();
+    end;
 
     trigger OnAfterGetRecord()
     begin
@@ -634,10 +784,13 @@ page 65000 "Reclamation Card PFE"
                 GraviteStyle := 'Favorable';
         end;
 
-        // Style Délai + Hors Délai
+        // Style Délai + Hors Délai (dont palier 75% SLA)
         if Rec."Hors Delai" then begin
             DelaiStyle := 'Unfavorable';
             HorsDelaiStyle := 'Unfavorable';
+        end else if CalculerDelaiPct(Rec) >= 75 then begin
+            DelaiStyle := 'Attention';
+            HorsDelaiStyle := 'Attention';
         end else if Rec."Delai En Cours" > 5 then begin
             DelaiStyle := 'Ambiguous';
             HorsDelaiStyle := 'Standard';
@@ -699,7 +852,6 @@ page 65000 "Reclamation Card PFE"
         else
             NbActionsStyle := 'Standard';
         CurrPage.ActionsCorrectivesPart.Page.SetNoReclamation(Rec."No_");
-        CurrPage.ReclamationFactBox.Page.Update(false);
         CurrPage.HistoriqueClientFB.Page.Update(false);
     end;
 
@@ -710,12 +862,21 @@ page 65000 "Reclamation Card PFE"
         CurrPage.ActionsCorrectivesPart.Page.SetNoReclamation(Rec."No_");
     end;
 
-    trigger OnAfterGetCurrRecord()
+    local procedure CalculerDelaiPct(RecReclam: Record Reclamation): Integer
+    var
+        RecParam: Record "Rec Parametres";
+        SLAJours: Integer;
     begin
-        CurrPage.ReclamationFactBox.Page.Update(false);
+        SLAJours := 7;
+        if RecParam.Get('DEFAULT') then
+            if RecParam."SLA Jours" > 0 then
+                SLAJours := RecParam."SLA Jours";
+
+        if SLAJours > 0 then
+            exit(Round((RecReclam."Delai En Cours" / SLAJours) * 100, 1))
+        else
+            exit(0);
     end;
-
-
 
     var
         StatutStyle: Text;
@@ -735,4 +896,8 @@ page 65000 "Reclamation Card PFE"
         NbRetardStyle: Text;
         ActionCorr: Record "Rec Action Corrective";
         WorkflowEngine: Codeunit "Rec Workflow Engine";
+        RoleMgt: Codeunit "Rec Role Mgt";
+        PeutOuvrir: Boolean;
+        PeutSAV: Boolean;
+        PeutQualite: Boolean;
 }

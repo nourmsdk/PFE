@@ -63,8 +63,16 @@ table 65000 "Reclamation"
             var
                 Veh: Record Vehicle;
                 Cust: Record Customer;
+                i: Integer;
             begin
                 if VIN = '' then exit;
+
+                // Validation format : alphanumérique, 17 caractères max
+                if StrLen(VIN) > 17 then
+                    Error('VIN invalide : maximum 17 caractères.');
+                for i := 1 to StrLen(VIN) do
+                    if not (VIN[i] in ['A' .. 'Z', '0' .. '9']) then
+                        Error('VIN invalide. Utilisez uniquement des lettres et des chiffres.');
 
                 Veh.Reset();
                 Veh.SetRange(VIN, VIN);
@@ -157,7 +165,8 @@ table 65000 "Reclamation"
                     "Description Categorie" := RecCat.Description
                 else
                     "Description Categorie" := '';
-                "Code Sous Categorie" := '';
+                if "Code Sous Categorie" <> '' then
+                    Validate("Code Sous Categorie", '');
                 "Description Sous Categorie" := '';
             end;
         }
@@ -181,6 +190,8 @@ table 65000 "Reclamation"
                     "Description Sous Categorie" := RecSousCat.Description
                 else
                     "Description Sous Categorie" := '';
+
+                GenererActionsCorrectives();
             end;
         }
         field(11; "Description Sous Categorie"; Text[100])
@@ -306,6 +317,7 @@ table 65000 "Reclamation"
             Caption = 'Attribué à';
             DataClassification = CustomerContent;
             TableRelation = User."User Name";
+            ValidateTableRelation = false;
         }
         field(19; Agence; Code[20])
         {
@@ -607,8 +619,7 @@ table 65000 "Reclamation"
         end;
         if "Date Creation" = 0D then
             "Date Creation" := Today();
-        if "Attribue A" = '' then
-            "Attribue A" := UserId();
+
         Statut := "Statut Reclamation"::Ouverte;
         Priorite := "Priorite Reclamation"::Faible;
         "Etape Workflow" := "Etape Workflow Reclamation"::Ouverture;
@@ -719,4 +730,44 @@ table 65000 "Reclamation"
         "Notification Envoyee" := true;
         Modify(false);
     end;
+
+    procedure GenererActionsCorrectives()
+    var
+        ActionStd: Record "Rec Action Standard";
+        ActionCorr: Record "Rec Action Corrective";
+        NewRec: Record "Rec Action Corrective";
+    begin
+        ActionCorr.Reset();
+        ActionCorr.SetRange("No Reclamation", "No_");
+        ActionCorr.SetRange("Genere Automatiquement", true);
+        ActionCorr.DeleteAll(true);
+
+        if "Code Sous Categorie" = '' then exit;
+
+        ActionStd.Reset();
+        ActionStd.SetRange("Code Categorie", "Code Categorie");
+        ActionStd.SetRange("Code Sous Categorie", "Code Sous Categorie");
+        if ActionStd.FindSet() then
+            repeat
+                NewRec.Init();
+                NewRec."No Reclamation" := "No_";
+                NewRec.Description := ActionStd.Description;
+                NewRec.Statut := "Statut Action Corrective"::Planifiee;
+                if ActionStd."Delai Jours Defaut" > 0 then
+                    NewRec."Date Prevue" := CalcDate('<' + Format(ActionStd."Delai Jours Defaut") + 'D>', Today());
+                NewRec."Genere Automatiquement" := true;
+                NewRec."No Ligne" := 0;
+                NewRec.Insert(true);  // ✅ décommenté
+            until ActionStd.Next() = 0;
+
+        ActionStd.Reset();
+        ActionStd.SetRange("Code Categorie", "Code Categorie");
+        ActionStd.SetRange("Code Sous Categorie", "Code Sous Categorie");
+        if ActionStd.FindFirst() then
+            if ActionStd."Responsabilite Defaut" <> "Responsabilite Reclamation"::" " then begin
+                Responsabilite := ActionStd."Responsabilite Defaut";
+                "Responsabilite Texte" := Format(Responsabilite);
+            end;
+    end;
+
 }

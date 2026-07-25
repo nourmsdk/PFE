@@ -1,0 +1,55 @@
+permissionset 65000 "REC OBJECTS"
+{
+    Assignable = true;
+    Caption = 'Réclamations - Tous les objets';
+
+    Permissions =
+        tabledata "Reclamation" = RIMD,
+        tabledata "Rec Categorie" = RIMD,
+        tabledata "Rec Sous Categorie" = RIMD,
+        tabledata "Rec Notification Log" = RIMD,
+        tabledata "Rec Workflow History" = RIMD,
+        tabledata "Rec Agence" = RIMD,
+        tabledata "Rec Parametres" = RIMD,
+        tabledata "Rec Workflow Rule" = RIMD,
+        tabledata "Rec Workflow Rule Applied" = RIMD,
+        tabledata "Rec Action Corrective" = RIMD,
+        tabledata "Rec Action Standard" = RIMD,
+        tabledata "Rec Job Log" = RIMD,
+        tabledata "Reclamation Cue" = RIMD,
+        tabledata "Rec Role Setup" = RIMD,
+
+        page "Reclamation Card PFE" = X,
+        page "Reclamation List PFE" = X,
+        page "Reclamation FactBox" = X,
+        page "Rec Categorie List" = X,
+        page "Rec Sous Categorie List" = X,
+        page "Rec Agence List" = X,
+        page "Rec Historique Client FB" = X,
+        page "Rec Parametres Page" = X,
+        page "Rec Workflow Rule List" = X,
+        page "Rec Workflow Rule Card" = X,
+        page "Rec Job Log List" = X,
+        page "Rec Workflow History FB" = X,
+        page "Rec Notification Log FB" = X,
+        page "Rec Action Corrective Subpage" = X,
+        page "Rec Workflow Rule Applied List" = X,
+        page "Rec Action Corrective Mgr" = X,
+        page "Rec Lancer Migration" = X,
+        page "Rec Action Standard List" = X,
+        page "Reclamation Cue Part" = X,
+        page "Rec Role Setup List" = X,
+        page "Rec Motif Rejet Dialog" = X,
+        page "Rec RC Receptionnaire" = X,
+        page "Rec RC Responsable SAV" = X,
+        page "Rec RC Responsable Qualite" = X,
+        page "Rec Cue Part SAV" = X,
+        page "Rec Cue Part Qualite" = X,
+
+        codeunit "Rec Workflow Engine" = X,
+        codeunit "Rec Workflow Job" = X,
+        codeunit "Rec Migration Texte" = X,
+        codeunit "Rec Role Mgt" = X,
+        codeunit "Rec Workflow Rule Seed" = X,
+        codeunit "Rec Open PowerBI Dashboard" = X;
+}

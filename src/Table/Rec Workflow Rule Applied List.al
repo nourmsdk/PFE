@@ -92,6 +92,7 @@ table 65008 "Rec Workflow Rule"
             Caption = 'Alors Attribue a';
             DataClassification = CustomerContent;
             TableRelation = User."User Name";
+            ValidateTableRelation = false;
         }
         field(25; "Action Message"; Text[250])
         {
@@ -102,6 +103,12 @@ table 65008 "Rec Workflow Rule"
         {
             Caption = 'Alors Forcer Hors Delai';
             DataClassification = CustomerContent;
+        }
+        field(27; "Action Notifier Role"; Enum "Rec Role")
+        {
+            Caption = 'Alors Notifier Role';
+            DataClassification = CustomerContent;
+            ToolTip = 'Notifie tous les utilisateurs actifs ayant ce rôle, sans changer "Attribué à" (ex. escalade Qualité en copie).';
         }
         field(30; "Une Seule Fois"; Boolean)
         {
@@ -182,6 +189,11 @@ page 65008 "Rec Workflow Rule List"
                     ApplicationArea = All;
                     Caption = 'Action notif.';
                 }
+                field("Action Notifier Role"; Rec."Action Notifier Role")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Notifier rôle';
+                }
                 field("Nb Executions"; Rec."Nb Executions")
                 {
                     ApplicationArea = All;
@@ -190,6 +202,38 @@ page 65008 "Rec Workflow Rule List"
             }
         }
     }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(ChargerReglesDefaut)
+            {
+                ApplicationArea = All;
+                Caption = 'Charger règles par défaut';
+                Image = Setup;
+                Promoted = true;
+                PromotedCategory = Process;
+                ToolTip = 'Recrée ALERTE75 et ESCALADE si elles ont été supprimées (sans doublon).';
+
+                trigger OnAction()
+                var
+                    Seed: Codeunit "Rec Workflow Rule Seed";
+                begin
+                    Seed.SeedDefaultRules();
+                    CurrPage.Update(false);
+                    Message('Règles par défaut chargées (ou déjà présentes).');
+                end;
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Seed: Codeunit "Rec Workflow Rule Seed";
+    begin
+        Seed.SeedDefaultRules();
+    end;
 
     trigger OnAfterGetRecord()
     begin
@@ -304,6 +348,11 @@ page 65009 "Rec Workflow Rule Card"
                 field("Action Attribuer A"; Rec."Action Attribuer A")
                 {
                     ApplicationArea = All;
+                }
+                field("Action Notifier Role"; Rec."Action Notifier Role")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Notifie tous les utilisateurs actifs ayant ce rôle (ex. escalade Qualité en copie), sans changer "Attribué à".';
                 }
                 field("Action Forcer Hors Delai"; Rec."Action Forcer Hors Delai")
                 {

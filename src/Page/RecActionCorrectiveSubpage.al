@@ -15,6 +15,7 @@ page 65014 "Rec Action Corrective Subpage"
                 {
                     ApplicationArea = All;
                     Caption = 'Description';
+                    Editable = not Rec."Genere Automatiquement";
                 }
                 field("Statut"; Rec.Statut)
                 {
@@ -22,11 +23,7 @@ page 65014 "Rec Action Corrective Subpage"
                     Caption = 'Statut';
                     StyleExpr = StatutStyle;
                 }
-                field("Responsable"; Rec.Responsable)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Responsable';
-                }
+
                 field("Date Prevue"; Rec."Date Prevue")
                 {
                     ApplicationArea = All;
@@ -55,11 +52,7 @@ page 65014 "Rec Action Corrective Subpage"
                     StyleExpr = JoursRestantsStyle;
                     ToolTip = 'Négatif = en retard, positif = jours restants avant échéance';
                 }
-                field("Commentaire"; Rec.Commentaire)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Commentaire';
-                }
+
             }
         }
     }
