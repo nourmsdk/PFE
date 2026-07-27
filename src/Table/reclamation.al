@@ -300,6 +300,7 @@ table 65000 "Reclamation"
                     else
                         Priorite := Priorite::" ";
                 end;
+                "Priorite Texte" := Format(Priorite);
             end;
         }
         field(17; Responsabilite; Enum "Responsabilite Reclamation")

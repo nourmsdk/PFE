@@ -51,5 +51,7 @@ permissionset 65000 "REC OBJECTS"
         codeunit "Rec Migration Texte" = X,
         codeunit "Rec Role Mgt" = X,
         codeunit "Rec Workflow Rule Seed" = X,
-        codeunit "Rec Open PowerBI Dashboard" = X;
+        codeunit "Rec Open PowerBI Dashboard" = X,
+
+        report "Rec Rapport Cloture" = X;
 }

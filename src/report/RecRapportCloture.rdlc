@@ -1,0 +1,1075 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString>Data Source=.</ConnectString>
+      </ConnectionProperties>
+      <rd:DataSourceID>e0000000-0000-0000-0000-000000000001</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Image Name="CompanyLogo">
+            <Source>Database</Source>
+            <Value>=System.Convert.ToBase64String(First(Fields!CompanyPicture.Value, "DataSet_Result"))</Value>
+            <MIMEType>image/bmp</MIMEType>
+            <Sizing>FitProportional</Sizing>
+            <Top>0cm</Top>
+            <Left>14cm</Left>
+            <Height>2cm</Height>
+            <Width>5cm</Width>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Image>
+          <Textbox Name="TitleTB">
+            <CanGrow>true</CanGrow>
+            <Top>0cm</Top>
+            <Left>0cm</Left>
+            <Height>1cm</Height>
+            <Width>13.5cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Rapport de Clôture Réclamation</Value>
+                    <Style>
+                      <FontSize>16pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                      <Color>#1F4E79</Color>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Line Name="TitleRule">
+            <Top>1.05cm</Top>
+            <Left>0cm</Left>
+            <Height>0cm</Height>
+            <Width>19cm</Width>
+            <Style>
+              <Border>
+                <Color>#1F4E79</Color>
+                <Style>Solid</Style>
+                <Width>2pt</Width>
+              </Border>
+            </Style>
+          </Line>
+          <Textbox Name="No_LabelTB">
+            <Top>1.2cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>N° Réclamation :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="No_ValueTB">
+            <Top>1.2cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!No_.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="StatutLabelTB">
+            <Top>1.8cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Statut :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="StatutValueTB">
+            <Top>1.8cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!Statut.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="NomClientLabelTB">
+            <Top>2.4cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Client :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="NomClientValueTB">
+            <Top>2.4cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>10cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!NomClient.Value, "DataSet_Result") &amp; " (" &amp; First(Fields!NoClient.Value, "DataSet_Result") &amp; ")"</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="TelLabelTB">
+            <Top>3cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Téléphone :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="TelValueTB">
+            <Top>3cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!NoTelephone.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="VehLabelTB">
+            <Top>3.6cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Véhicule (N° série / VIN) :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="VehValueTB">
+            <Top>3.6cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>10cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!NoSerieVehicule.Value, "DataSet_Result") &amp; " / " &amp; First(Fields!VIN.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="AgenceLabelTB">
+            <Top>4.2cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Agence :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="AgenceValueTB">
+            <Top>4.2cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>10cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!NomAgence.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="CatLabelTB">
+            <Top>4.8cm</Top>
+            <Left>0cm</Left>
+            <Height>1.1cm</Height>
+            <CanGrow>true</CanGrow>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Catégorie / Sous-catégorie :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="CatValueTB">
+            <Top>4.8cm</Top>
+            <Left>6.2cm</Left>
+            <Height>1.1cm</Height>
+            <CanGrow>true</CanGrow>
+            <Width>12.5cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DescriptionCategorie.Value, "DataSet_Result") &amp; " / " &amp; First(Fields!DescriptionSousCategorie.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="GravLabelTB">
+            <Top>5.9cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Gravité / Priorité :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="GravValueTB">
+            <Top>5.9cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>10cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!Gravite.Value, "DataSet_Result") &amp; " / " &amp; First(Fields!Priorite.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="RespLabelTB">
+            <Top>6.5cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Responsabilité :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="RespValueTB">
+            <Top>6.5cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>10cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!Responsabilite.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="AttribueLabelTB">
+            <Top>7.1cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Attribué à :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="AttribueValueTB">
+            <Top>7.1cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>10cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!AttribueA.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="DatesLabelTB">
+            <Top>7.7cm</Top>
+            <Left>0cm</Left>
+            <Height>1.1cm</Height>
+            <CanGrow>true</CanGrow>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Création / Prise en charge / Clôture :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="DatesValueTB">
+            <Top>7.7cm</Top>
+            <Left>6.2cm</Left>
+            <Height>1.1cm</Height>
+            <CanGrow>true</CanGrow>
+            <Width>12.5cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DateCreation.Value, "DataSet_Result") &amp; " / " &amp; First(Fields!DatePriseEnCharge.Value, "DataSet_Result") &amp; " / " &amp; First(Fields!DateCloture.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="DelaiLabelTB">
+            <Top>8.8cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Délai traitement (j) / Hors SLA :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="DelaiValueTB">
+            <Top>8.8cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>10cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DelaiTraitement.Value, "DataSet_Result") &amp; " / " &amp; First(Fields!HorsDelai.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="DescLabelTB">
+            <Top>9.6cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>19cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Description de la réclamation :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="DescValueTB">
+            <CanGrow>true</CanGrow>
+            <Top>10.2cm</Top>
+            <Left>0cm</Left>
+            <Height>1cm</Height>
+            <Width>19cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!Description.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="ActionLabelTB">
+            <Top>11.6cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>19cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Action prise :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="ActionValueTB">
+            <CanGrow>true</CanGrow>
+            <Top>12.2cm</Top>
+            <Left>0cm</Left>
+            <Height>1cm</Height>
+            <Width>19cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DescriptionActionPrise.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="RetourLabelTB">
+            <Top>13.6cm</Top>
+            <Left>0cm</Left>
+            <Height>0.6cm</Height>
+            <Width>6cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Retour client :</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="RetourValueTB">
+            <Top>13.6cm</Top>
+            <Left>6.2cm</Left>
+            <Height>0.6cm</Height>
+            <Width>10cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!RetourClient.Value, "DataSet_Result")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Textbox Name="ActionsTitleTB">
+            <Top>14.6cm</Top>
+            <Left>0cm</Left>
+            <Height>0.7cm</Height>
+            <Width>19cm</Width>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Actions Correctives</Value>
+                    <Style>
+                      <FontSize>13pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                      <Color>#1F4E79</Color>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+          </Textbox>
+          <Tablix Name="ActionsTablix">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>4.5cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.5cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.2cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.2cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.2cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.8cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>3.6cm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="H1">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Description</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>White</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <BackgroundColor>#1F4E79</BackgroundColor>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="H2">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Responsable</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>White</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <BackgroundColor>#1F4E79</BackgroundColor>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="H3">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Date prévue</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>White</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <BackgroundColor>#1F4E79</BackgroundColor>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="H4">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Date réalisée</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>White</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <BackgroundColor>#1F4E79</BackgroundColor>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="H5">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Statut</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>White</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <BackgroundColor>#1F4E79</BackgroundColor>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="H6">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Délai (j)</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>White</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <BackgroundColor>#1F4E79</BackgroundColor>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="H7">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Commentaire</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Color>White</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <BackgroundColor>#1F4E79</BackgroundColor>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="D1">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ActDescription.Value</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="D2">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ActResponsable.Value</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="D3">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ActDatePrevue.Value</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="D4">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ActDateRealisee.Value</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="D5">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ActStatut.Value</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="D6">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ActDelaiRealisation.Value</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="D7">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ActCommentaire.Value</Value>
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="Details" />
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet_Result</DataSetName>
+            <Top>15.4cm</Top>
+            <Left>0cm</Left>
+            <Height>1.2cm</Height>
+            <Width>19cm</Width>
+            <Style>
+              <Border>
+                <Style>Solid</Style>
+                <Width>0.25pt</Width>
+              </Border>
+            </Style>
+          </Tablix>
+        </ReportItems>
+        <Height>30cm</Height>
+      </Body>
+      <Width>19cm</Width>
+      <Page>
+        <PageHeight>29.7cm</PageHeight>
+        <PageWidth>21cm</PageWidth>
+        <LeftMargin>1cm</LeftMargin>
+        <RightMargin>1cm</RightMargin>
+        <TopMargin>1cm</TopMargin>
+        <BottomMargin>1cm</BottomMargin>
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Fields>
+        <Field Name="No_">
+          <DataField>No_</DataField>
+        </Field>
+        <Field Name="Description">
+          <DataField>Description</DataField>
+        </Field>
+        <Field Name="NomClient">
+          <DataField>NomClient</DataField>
+        </Field>
+        <Field Name="NoClient">
+          <DataField>NoClient</DataField>
+        </Field>
+        <Field Name="NoTelephone">
+          <DataField>NoTelephone</DataField>
+        </Field>
+        <Field Name="NoSerieVehicule">
+          <DataField>NoSerieVehicule</DataField>
+        </Field>
+        <Field Name="VIN">
+          <DataField>VIN</DataField>
+        </Field>
+        <Field Name="Agence">
+          <DataField>Agence</DataField>
+        </Field>
+        <Field Name="NomAgence">
+          <DataField>NomAgence</DataField>
+        </Field>
+        <Field Name="DateCreation">
+          <DataField>DateCreation</DataField>
+        </Field>
+        <Field Name="DatePriseEnCharge">
+          <DataField>DatePriseEnCharge</DataField>
+        </Field>
+        <Field Name="DateCloture">
+          <DataField>DateCloture</DataField>
+        </Field>
+        <Field Name="DelaiTraitement">
+          <DataField>DelaiTraitement</DataField>
+        </Field>
+        <Field Name="Statut">
+          <DataField>Statut</DataField>
+        </Field>
+        <Field Name="Gravite">
+          <DataField>Gravite</DataField>
+        </Field>
+        <Field Name="Priorite">
+          <DataField>Priorite</DataField>
+        </Field>
+        <Field Name="Responsabilite">
+          <DataField>Responsabilite</DataField>
+        </Field>
+        <Field Name="Canal">
+          <DataField>Canal</DataField>
+        </Field>
+        <Field Name="TypeReclamation">
+          <DataField>TypeReclamation</DataField>
+        </Field>
+        <Field Name="CodeCategorie">
+          <DataField>CodeCategorie</DataField>
+        </Field>
+        <Field Name="DescriptionCategorie">
+          <DataField>DescriptionCategorie</DataField>
+        </Field>
+        <Field Name="CodeSousCategorie">
+          <DataField>CodeSousCategorie</DataField>
+        </Field>
+        <Field Name="DescriptionSousCategorie">
+          <DataField>DescriptionSousCategorie</DataField>
+        </Field>
+        <Field Name="DescriptionActionPrise">
+          <DataField>DescriptionActionPrise</DataField>
+        </Field>
+        <Field Name="RetourClient">
+          <DataField>RetourClient</DataField>
+        </Field>
+        <Field Name="AttribueA">
+          <DataField>AttribueA</DataField>
+        </Field>
+        <Field Name="HorsDelai">
+          <DataField>HorsDelai</DataField>
+        </Field>
+        <Field Name="CompanyPicture">
+          <DataField>CompanyPicture</DataField>
+        </Field>
+        <Field Name="ActDescription">
+          <DataField>ActDescription</DataField>
+        </Field>
+        <Field Name="ActResponsable">
+          <DataField>ActResponsable</DataField>
+        </Field>
+        <Field Name="ActDatePrevue">
+          <DataField>ActDatePrevue</DataField>
+        </Field>
+        <Field Name="ActDateRealisee">
+          <DataField>ActDateRealisee</DataField>
+        </Field>
+        <Field Name="ActStatut">
+          <DataField>ActStatut</DataField>
+        </Field>
+        <Field Name="ActCommentaire">
+          <DataField>ActCommentaire</DataField>
+        </Field>
+        <Field Name="ActDelaiRealisation">
+          <DataField>ActDelaiRealisation</DataField>
+        </Field>
+      </Fields>
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+    </DataSet>
+  </DataSets>
+</Report>

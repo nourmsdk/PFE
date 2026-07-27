@@ -479,6 +479,23 @@ page 65000 "Reclamation Card PFE"
                 end;
             }
 
+            action(ImprimerRapportCloture)
+            {
+                ApplicationArea = All;
+                Caption = 'Imprimer rapport de clôture';
+                Image = PrintReport;
+                Promoted = true;
+                PromotedCategory = Report;
+                Enabled = Rec.Cloturee;
+                ToolTip = 'Génère le rapport PDF de clôture (récapitulatif + actions correctives).';
+
+                trigger OnAction()
+                begin
+                    Rec.SetRecFilter();
+                    Report.RunModal(Report::"Rec Rapport Cloture", false, false, Rec);
+                end;
+            }
+
             action(PasserQualification)
             {
                 Caption = 'Envoyer pour qualification';
