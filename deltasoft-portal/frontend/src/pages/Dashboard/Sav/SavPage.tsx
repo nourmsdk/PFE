@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { PowerBiNavigator } from "@/components/dashboard/PowerBiNavigator";
 import { WrenchIcon } from "@/components/ui/ServiceIcons";
+import { StatusBarChart } from "@/components/charts/StatusBarChart";
 import { MOCK_COMPLAINTS } from "@/data/mockComplaints";
 import type { Complaint, ComplaintStatus } from "@/types/complaint";
 import { priorityBadgeClass } from "@/utils/dashboardBadges";
@@ -24,6 +26,15 @@ export function SavPage() {
     const resolues = complaints.filter((c) => c.status === "Résolue" || c.status === "Clôturée").length;
     return { enCours, nouvelles, urgentes, resolues };
   }, [complaints]);
+
+  const statusChartData = useMemo(
+    () =>
+      STATUS_OPTIONS.map((status) => ({
+        status,
+        count: complaints.filter((c) => c.status === status).length,
+      })),
+    [complaints],
+  );
 
   const filtered = complaints.filter((c) => {
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
@@ -78,6 +89,18 @@ export function SavPage() {
               <div className={styles.kpiLabel}>Résolues / clôturées</div>
             </div>
           </div>
+        </div>
+
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div className={styles.panelTitle} style={{ marginBottom: "0.75rem" }}>Tableau de bord Power BI</div>
+          <PowerBiNavigator role="sav" />
+        </div>
+
+        <div className={styles.panel}>
+          <div className={styles.panelHead}>
+            <div className={styles.panelTitle}>Répartition par statut</div>
+          </div>
+          <StatusBarChart data={statusChartData} />
         </div>
 
         <div className={styles.panel}>

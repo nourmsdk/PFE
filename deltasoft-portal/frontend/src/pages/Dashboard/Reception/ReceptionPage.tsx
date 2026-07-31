@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { PowerBiNavigator } from "@/components/dashboard/PowerBiNavigator";
 import { InboxIcon } from "@/components/ui/ServiceIcons";
 import { classifyComplaint } from "@/utils/classifyComplaint";
 import type { ClassificationResult } from "@/utils/classifyComplaint";
@@ -186,6 +187,11 @@ export function ReceptionPage() {
               </div>
             )}
           </div>
+        </div>
+
+        <div style={{ marginTop: "1.5rem" }}>
+          <div className={styles.panelTitle} style={{ marginBottom: "0.75rem" }}>Tableau de bord Power BI</div>
+          <PowerBiNavigator role="reception" />
         </div>
       </div>
     </main>

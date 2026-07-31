@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { PowerBiNavigator } from "@/components/dashboard/PowerBiNavigator";
 import { ShieldCheckIcon } from "@/components/ui/ServiceIcons";
+import { ComplianceDonutChart } from "@/components/charts/ComplianceDonutChart";
+import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
 import { MOCK_COMPLAINTS } from "@/data/mockComplaints";
 import type { Complaint } from "@/types/complaint";
 import { complianceBadgeClass, complianceLabel } from "@/utils/dashboardBadges";
@@ -31,6 +34,23 @@ export function QualitePage() {
       .forEach((c) => counts.set(c.category, (counts.get(c.category) ?? 0) + 1));
     return Array.from(counts.entries()).filter(([, count]) => count >= 1);
   }, [resolved]);
+
+  const complianceChartData = useMemo(
+    () => [
+      { label: "Conforme", value: resolved.filter((c) => c.qualityCompliant === true).length },
+      { label: "Non conforme", value: resolved.filter((c) => c.qualityCompliant === false).length },
+      {
+        label: "À contrôler",
+        value: resolved.filter((c) => c.qualityCompliant === null || c.qualityCompliant === undefined).length,
+      },
+    ],
+    [resolved],
+  );
+
+  const categoryChartData = useMemo(
+    () => alerts.map(([category, count]) => ({ category, count })),
+    [alerts],
+  );
 
   function setCompliance(id: string, compliant: boolean) {
     setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, qualityCompliant: compliant } : c)));
@@ -74,6 +94,29 @@ export function QualitePage() {
               <div className={styles.kpiLabel}>Résolues / clôturées</div>
             </div>
           </div>
+        </div>
+
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div className={styles.panelTitle} style={{ marginBottom: "0.75rem" }}>Tableau de bord Power BI</div>
+          <PowerBiNavigator role="qualite" />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: alerts.length > 0 ? "1fr 1fr" : "1fr", gap: "1.5rem" }}>
+          <div className={styles.panel}>
+            <div className={styles.panelHead}>
+              <div className={styles.panelTitle}>Taux de conformité</div>
+            </div>
+            <ComplianceDonutChart data={complianceChartData} />
+          </div>
+
+          {alerts.length > 0 && (
+            <div className={styles.panel}>
+              <div className={styles.panelHead}>
+                <div className={styles.panelTitle}>Non-conformités par catégorie</div>
+              </div>
+              <CategoryBarChart data={categoryChartData} />
+            </div>
+          )}
         </div>
 
         {alerts.length > 0 && (
